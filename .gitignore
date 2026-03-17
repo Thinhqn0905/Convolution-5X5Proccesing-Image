@@ -1,0 +1,22 @@
+# Simulation
+sim/
+*.vcd
+*.vvp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Vivado
+vivado_project/.Xil/
+vivado_project/*.jou
+vivado_project/*.log
+vivado_project/*.str
+vivado_project/*.cache/
+vivado_project/*.runs/
+vivado_project/*.ip_user_files/
+
+# OS/editor
+.DS_Store
+Thumbs.db
