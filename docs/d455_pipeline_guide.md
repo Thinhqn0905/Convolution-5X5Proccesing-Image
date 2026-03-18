@@ -3,18 +3,23 @@
 ## Muc tieu
 Huong dan chay Intel RealSense D455 stream lien tuc va xuat du lieu:
 - Anh truoc xu ly (raw)
-- Anh sau xu ly (processed)
-- Hex input/output theo frame
+- Feed frame cho RTL (hex_in)
+- Anh/hex sau xu ly duoc tao tu RTL simulation (processed, hex_out)
+
+Luu y quan trong: Python KHONG lam convolution. Python chi capture/feed va goi RTL simulation.
 
 ## Script chinh
 - python/d455_stream_process.py
+- python/rtl_process_hex_frames.py
 - scripts/run_d455_pipeline.ps1
 
 ## Chay nhanh 1 kernel
 From workspace root:
 
 ```powershell
-C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --kernel gaussian5 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke
+C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 640 --feed_height 480 --duration_sec 3 --max_frames 1 --save_every 1 --out_dir captures/d455/smoke
+
+C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/smoke/hex_in --out_dir captures/d455/smoke --kernel gaussian5 --width 640 --height 480 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe
 ```
 
 ## Chay day du 3 kernel + regression
@@ -23,9 +28,23 @@ C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_st
 .\scripts\run_d455_pipeline.ps1
 ```
 
+## Benchmark N frame full 640x480 (sim/frame)
+Vi du benchmark 2 frame tu camera va xuat report:
+
+```powershell
+C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 640 --feed_height 480 --duration_sec 6 --max_frames 2 --save_every 1 --out_dir captures/d455/benchmark640
+
+C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/benchmark640/hex_in --out_dir captures/d455/benchmark640 --kernel gaussian5 --width 640 --height 480 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe
+```
+
+Report tao ra:
+- captures/d455/benchmark640/rtl_benchmark_gaussian5.json
+- captures/d455/benchmark640/rtl_benchmark_gaussian5.csv
+
 ## Thu muc output
 Moi kernel co cau truc:
 - captures/d455/<kernel>/raw
+- captures/d455/<kernel>/feed_rgb
 - captures/d455/<kernel>/processed
 - captures/d455/<kernel>/hex_in
 - captures/d455/<kernel>/hex_out
@@ -50,9 +69,12 @@ Ten file theo frame index, vi du:
 6. D455 smoke stream 5s
 
 ## Luu y hieu nang
-- FPS software phu thuoc CPU va tan suat ghi file.
+- Full 640x480 RTL simulation can be slow; this is expected in functional verification mode.
 - Neu can fps cao hon:
-  - tang save_every
-  - giam do phan giai
-  - tach thread ghi file
-  - day phan tich chap tren FPGA
+  - giam so frame trong smoke test
+  - dung on-board FPGA realtime path thay cho software simulation loop
+
+## Tai lieu lien quan
+- Pre-board verification gate: docs/pre_board_verification_plan.md
+- Huong dan stream du lieu that tren board: docs/board_streaming_guide.md
+- SAIF power flow: docs/saif_power_flow.md

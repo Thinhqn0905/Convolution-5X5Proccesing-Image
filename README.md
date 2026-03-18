@@ -23,17 +23,45 @@ Programmable RGB 5x5 convolution engine project scaffold (Week 1-2 implementatio
   - `.\\scripts\\run_regression.ps1`
 
 ## D455 camera pipeline
-- Stream Intel RealSense D455, process continuously, and export before/after artifacts:
+- Stream Intel RealSense D455 in capture/feed mode, then process by RTL simulation and export before/after artifacts:
    - `.\\scripts\\run_d455_pipeline.ps1`
 
-- Run a short smoke test for one kernel:
-   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --kernel gaussian5 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke`
+- Run capture/feed only (no software convolution):
+   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 640 --feed_height 480 --duration_sec 3 --max_frames 1 --save_every 1 --out_dir captures/d455/smoke`
+
+- Run RTL processing for captured feed hex:
+   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/smoke/hex_in --out_dir captures/d455/smoke --kernel gaussian5 --width 640 --height 480 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe`
+
+## SAIF power flow (strict)
+- Recommended strict flow (auto-detect path issues, fail-fast, one-shot repair):
+   - `.\scripts\run_power_with_saif.ps1 -FrameHex .\captures\d455\full640_smoke\hex_in\frame_000000.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\sim\activity.saif -VivadoBat E:\Vivado\2023.2\bin\vivado.bat`
+
+- Clock sweep with SAIF:
+   - `.\scripts\sweep_clock_with_saif.ps1 -PeriodsNs @(30.0,27.0,25.0) -FrameHex .\captures\d455\full640_smoke\hex_in\frame_000000.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\sim\activity.saif -VivadoBat E:\Vivado\2023.2\bin\vivado.bat`
+
+- If a path error is detected in Vivado output, scripts now stop immediately and print the log path under `vivado_project/reports/`.
 
 Generated artifacts:
 - `captures/d455/<kernel>/raw/*.png`
+- `captures/d455/<kernel>/feed_rgb/*.png`
 - `captures/d455/<kernel>/processed/*.png`
 - `captures/d455/<kernel>/hex_in/*.hex`
 - `captures/d455/<kernel>/hex_out/*.hex`
+
+## Multi-frame benchmark campaign (640x480)
+- Run capture + RTL processing + summary for multiple kernels:
+   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/benchmark_campaign.py --workspace . --capture_dir captures/d455/campaign640 --frames 1 --width 640 --height 480 --fps 30 --kernels gaussian5 sharpen5 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe`
+
+- Outputs:
+   - `captures/d455/campaign640/campaign_summary.json`
+   - `captures/d455/campaign640/rtl_benchmark_<kernel>.json`
+   - `captures/d455/campaign640/rtl_benchmark_<kernel>.csv`
+
+## AXI wrapper baseline test
+- Compile and run AXI Stream wrapper testbench:
+   - `cd tb`
+   - `iverilog -g2012 -Wall -o ..\\sim\\sim_axi.vvp ..\\src\\top_convolution.sv ..\\src\\line_buffer_4.sv ..\\src\\kernel_loader.sv ..\\src\\mac_array_25x3.sv ..\\src\\pipeline_stage.sv ..\\src\\axi_stream_conv_wrapper.sv tb_axi_stream_conv_wrapper.sv`
+   - `vvp ..\\sim\\sim_axi.vvp`
 
 ## Project layout
 - docs/: architecture/spec/simulation notes
@@ -43,3 +71,8 @@ Generated artifacts:
 - hex/: frame hex files
 - sim/: generated simulation outputs
 - vivado_project/: reserved for synthesis flow
+
+## Verification and board bring-up docs
+- Pre-board verification gates: `docs/pre_board_verification_plan.md`
+- Board streaming with real data: `docs/board_streaming_guide.md`
+- SAIF power methodology: `docs/saif_power_flow.md`
