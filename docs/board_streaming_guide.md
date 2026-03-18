@@ -1,49 +1,64 @@
-# Board Streaming Guide (D455 Real Data)
+# FPGA Bring-up and Streaming Guide
 
-## Goal
-Run real camera data through FPGA path, not software emulation.
+## 1) Objective
 
-## Reference Architecture
-1. D455 color stream on host (RGB/BGR conversion as needed).
-2. Host packetizes pixels and sends to programmable logic input interface.
-3. FPGA `top_convolution` (through AXI stream wrapper) performs convolution.
-4. Host receives processed stream and renders/stores output frames.
+Run real camera data through FPGA datapath (not software-only emulation), and confirm output parity with RTL references.
 
-## Bring-up Sequence
-1. Program FPGA bitstream.
-2. Validate control path:
-   - write kernel coefficients
-   - read back control/status registers
-3. Validate stream path with synthetic test pattern.
-4. Switch input source to D455 real frames.
-5. Compare selected frames against RTL simulation golden artifacts.
+## 2) Pre-board checklist
 
-## Data Format Contract
-- Pixel width: 24-bit packed RGB.
+1. RTL regression passes all kernels.
+2. Vivado timing sweep identifies a timing-clean operating point.
+3. SAIF-based power flow completes with no script/path errors.
+4. AXI-Lite kernel write/read path is validated.
+
+## 3) Hardware data contract
+
+- Input pixels: 24-bit RGB packed.
 - Scan order: row-major, left-to-right, top-to-bottom.
-- Valid policy: output valid only after 5x5 warm-up window.
-- Border policy: output zeros for non-valid border region (or host-side crop), keep consistent across all flows.
+- Kernel size: 5x5.
+- Output valid starts after warm-up (x>=4, y>=4).
+- Border handling must match host-side reconstruction/comparison rules.
 
-## Host-side Requirements
-1. Stable D455 capture at configured resolution and FPS.
-2. Deterministic frame indexing.
-3. Backpressure handling if DMA/stream sink is not always ready.
-4. Kernel update command path separate from pixel stream.
+## 4) Bring-up sequence on FPGA
 
-## Recommended Validation Steps
-1. Functional parity test:
-   - Same input frame -> RTL sim output and board output should match (except agreed border policy).
-2. Throughput test:
-   - Measure sustained FPS and dropped frame count for 60s run.
-3. Stability test:
-   - Run 10+ minutes with periodic kernel switches.
-4. Recovery test:
-   - Reset/restart stream without power cycle.
+1. Program bitstream.
+2. Initialize AXI-Lite registers and load coefficients.
+3. Run synthetic frame through AXI stream path.
+4. Capture output frame from sink/DMA.
+5. Compare FPGA output with RTL expected output for same input.
+6. Switch source to live camera stream.
 
-## Checklist Before Live Demo
-- Bitstream tested at chosen clock with timing-clean reports.
-- Kernel switch verified in runtime.
-- At least one end-to-end capture folder includes:
-  - input frame(s)
-  - board output frame(s)
-  - compare summary (hash or mismatch count)
+## 5) Kernel loading protocol
+
+For each tap:
+
+1. Write address register.
+2. Write coefficient register.
+3. Write commit register bit0=1.
+
+Then start/enable stream path.
+
+## 6) Validation gates
+
+- Functional gate:
+  - mismatch count is zero against expected stream for known test vectors.
+- Throughput gate:
+  - sustained frame rate at chosen clock and resolution for >=60s.
+- Stability gate:
+  - no deadlock/data-loss over long run with kernel switches.
+- Recovery gate:
+  - stream restart/reset works without full power cycle.
+
+## 7) Debug priorities when output looks wrong
+
+1. Confirm KERNEL_Q and coefficient scale consistency.
+2. Read back programmed coefficients.
+3. Check valid-count and frame alignment (warm-up offset).
+4. Inspect AXI-Lite write ordering and transaction timing.
+5. Verify stream backpressure/overflow behavior.
+
+## 8) Practical recommendation from current pre-board data
+
+- Use timing-clean clock point from sweep summary as baseline.
+- Improve critical path before pushing to higher frequency targets.
+- Keep 320x240 for fast iteration, reserve 640x480 for signoff.

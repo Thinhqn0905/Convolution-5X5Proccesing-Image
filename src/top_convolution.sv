@@ -5,7 +5,7 @@ module top_convolution #(
     parameter int DATA_W = 24,
     parameter int COEFF_W = 16,
     parameter int KSIZE = 5,
-    parameter int KERNEL_Q = 4
+    parameter int KERNEL_Q = 8
 ) (
     input  logic                            clk,
     input  logic                            rst,

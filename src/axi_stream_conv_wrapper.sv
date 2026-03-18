@@ -4,7 +4,7 @@ module axi_stream_conv_wrapper #(
     parameter int DATA_W = 24,
     parameter int COEFF_W = 16,
     parameter int KSIZE = 5,
-    parameter int KERNEL_Q = 4,
+    parameter int KERNEL_Q = 8,
     parameter int IMAGE_WIDTH = 640
 ) (
     input  logic                           aclk,

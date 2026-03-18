@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2023.2 (win64) Build 4029153 Fri Oct 13 20:14:34 MDT 2023
-| Date             : Wed Mar 18 14:36:54 2026
+| Date             : Wed Mar 18 18:08:31 2026
 | Host             : DESKTOP-5BKHJFE running 64-bit major release  (build 9200)
 | Command          : report_power -file E:/PROJECTS/convolution_fpga/vivado_project/reports/power_post_route.rpt
 | Design           : top_convolution
@@ -30,18 +30,18 @@ Table of Contents
 ----------
 
 +--------------------------+------------------------------------------------+
-| Total On-Chip Power (W)  | 0.115                                          |
+| Total On-Chip Power (W)  | 0.121                                          |
 | Design Power Budget (W)  | Unspecified*                                   |
 | Power Budget Margin (W)  | NA                                             |
-| Dynamic (W)              | 0.011                                          |
+| Dynamic (W)              | 0.017                                          |
 | Device Static (W)        | 0.105                                          |
 | Effective TJA (C/W)      | 11.5                                           |
-| Max Ambient (C)          | 83.7                                           |
-| Junction Temperature (C) | 26.3                                           |
+| Max Ambient (C)          | 83.6                                           |
+| Junction Temperature (C) | 26.4                                           |
 | Confidence Level         | Medium                                         |
 | Setting File             | ---                                            |
 | Simulation Activity File | E:/PROJECTS/convolution_fpga/sim/activity.saif |
-| Design Nets Matched      | 2%   (118/6272)                                |
+| Design Nets Matched      | 2%   (120/6390)                                |
 +--------------------------+------------------------------------------------+
 * Specify Design Power Budget using, set_operating_conditions -design_power_budget <value in Watts>
 
@@ -52,20 +52,20 @@ Table of Contents
 +--------------------------+-----------+----------+-----------+-----------------+
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
-| Clocks                   |     0.003 |        3 |       --- |             --- |
-| Slice Logic              |     0.001 |     1775 |       --- |             --- |
+| Clocks                   |     0.004 |        3 |       --- |             --- |
+| Slice Logic              |     0.001 |     1833 |       --- |             --- |
 |   LUT as Distributed RAM |    <0.001 |      720 |     17400 |            4.14 |
-|   LUT as Logic           |    <0.001 |      210 |     53200 |            0.39 |
+|   LUT as Logic           |    <0.001 |      207 |     53200 |            0.39 |
 |   F7/F8 Muxes            |    <0.001 |      504 |     53200 |            0.95 |
-|   Register               |    <0.001 |      219 |    106400 |            0.21 |
+|   Register               |    <0.001 |      291 |    106400 |            0.27 |
 |   CARRY4                 |    <0.001 |       23 |     13300 |            0.17 |
 |   Others                 |     0.000 |        6 |       --- |             --- |
-| Signals                  |     0.004 |     5012 |       --- |             --- |
-| Block RAM                |     0.001 |        1 |       140 |            0.71 |
-| DSPs                     |     0.001 |       78 |       220 |           35.45 |
-| I/O                      |    <0.001 |       74 |       125 |           59.20 |
+| Signals                  |     0.005 |     5131 |       --- |             --- |
+| Block RAM                |     0.002 |        1 |       140 |            0.71 |
+| DSPs                     |     0.001 |       84 |       220 |           38.18 |
+| I/O                      |     0.003 |       74 |       125 |           59.20 |
 | Static Power             |     0.105 |          |           |                 |
-| Total                    |     0.115 |          |           |                 |
+| Total                    |     0.121 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -75,11 +75,11 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     0.018 |       0.010 |      0.007 |       NA    | Unspecified | NA         |
-| Vccaux    |       1.800 |     0.010 |       0.000 |      0.010 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     0.021 |       0.013 |      0.007 |       NA    | Unspecified | NA         |
+| Vccaux    |       1.800 |     0.011 |       0.000 |      0.010 |       NA    | Unspecified | NA         |
 | Vcco33    |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
-| Vcco18    |       1.800 |     0.001 |       0.000 |      0.001 |       NA    | Unspecified | NA         |
+| Vcco18    |       1.800 |     0.002 |       0.001 |      0.001 |       NA    | Unspecified | NA         |
 | Vcco15    |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco135   |       1.350 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco12    |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -138,7 +138,7 @@ Table of Contents
 +-------+--------+-----------------+
 | Clock | Domain | Constraint (ns) |
 +-------+--------+-----------------+
-| clk   | clk    |            25.0 |
+| clk   | clk    |            18.0 |
 +-------+--------+-----------------+
 
 
@@ -151,8 +151,8 @@ Table of Contents
 +-----------------+-----------+
 | Name            | Power (W) |
 +-----------------+-----------+
-| top_convolution |     0.011 |
-|   u_line_buffer |     0.009 |
+| top_convolution |     0.017 |
+|   u_line_buffer |     0.012 |
 |   u_mac_array   |     0.001 |
 +-----------------+-----------+
 

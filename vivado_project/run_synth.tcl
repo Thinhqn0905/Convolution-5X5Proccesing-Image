@@ -23,6 +23,12 @@ report_timing_summary -file [file normalize "${rpt_dir}/timing_post_synth.rpt"]
 report_utilization -file [file normalize "${rpt_dir}/util_post_synth.rpt"]
 
 reset_run impl_1
+# O3: favor timing closure with stronger implementation directives.
+set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE ExploreWithRemap [get_runs impl_1]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
+set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 launch_runs impl_1 -to_step route_design -jobs 4
 wait_on_run impl_1
 

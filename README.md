@@ -1,94 +1,78 @@
 # convolution_fpga
 
-Programmable RGB 5x5 convolution engine project scaffold (Week 1-2 implementation start).
+Streaming RGB 5x5 convolution core for FPGA, with simulation-first verification and pre-board timing/power checks.
 
-## Current scope
-- Simulation-first workflow with Icarus Verilog + GTKWave
-- Streaming RTL baseline for line buffer, kernel loader, MAC, and top integration
-- Python tools for synthetic frame generation and golden-model verification
+## 1) What this system guarantees
 
-## Quick start
-1. Create synthetic test frames:
-   - `python python/synthetic_frames.py --out hex --count 10 --width 640 --height 480`
-2. Prepare vectors for a selected kernel (example: identity5):
-   - `python python/prepare_case.py --in_hex hex/test_frame_0.hex --width 16 --height 16 --kernel identity5 --kernel_out sim/kernel.hex --expected_out sim/expected.hex`
-3. Run baseline simulation:
-   - `cd tb`
-   - `make -f Makefile.sim`
-4. Open waveform:
-   - `gtkwave ../sim/dump.vcd`
+- Input format: 24-bit RGB (R[23:16], G[15:8], B[7:0]) in raster scan order.
+- Window: 5x5 over streaming pixels.
+- Border policy: output is valid only after warm-up (x>=4 and y>=4); non-valid border is zero in reconstructed frame.
+- Arithmetic: signed 16-bit kernel coefficients, 48-bit accumulators, saturating clamp to [0..255].
+- Fixed-point normalization: default KERNEL_Q=8.
 
-## Regression
-- Run all required kernels (identity, gaussian, sharpen, emboss, laplacian):
-  - `.\\scripts\\run_regression.ps1`
+## 2) Output-spec interpretation (important)
 
-## D455 camera pipeline
-- Realtime multi-kernel flow (capture once, process gaussian/sharpen/laplacian, output one final combined video):
-   - `.\\scripts\\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -Width 640 -Height 480 -FeedWidth 320 -FeedHeight 240 -Frames 12 -Fps 30`
+- gaussian5 should preserve average brightness (not clip to white) when coefficients sum to 256 and shift is 8.
+- sharpen5 and laplacian5 are high-pass filters; dark background with bright edges is expected behavior, not failure.
+- A "PASS" means RTL output matches golden expected stream and sample counts are consistent.
 
-- Clean generated captures/logs while keeping final output:
-   - `.\\scripts\\clean_project_generated.ps1 -KeepOutputDir captures/d455/output_live/final`
+## 3) Quick run commands
 
-- Run capture/feed only (no software convolution):
-   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 640 --feed_height 480 --duration_sec 3 --max_frames 1 --save_every 1 --out_dir captures/d455/smoke`
+### 3.1 RTL regression (all kernels)
 
-- Run RTL processing for captured feed hex:
-   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/smoke/hex_in --out_dir captures/d455/smoke --kernel gaussian5 --width 640 --height 480 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe`
+- powershell -ExecutionPolicy Bypass -File .\scripts\run_regression.ps1
 
-## SAIF power flow (strict)
-- Recommended strict flow (auto-detect path issues, fail-fast, one-shot repair):
-   - `.\scripts\run_power_with_saif.ps1 -FrameHex .\captures\d455\full640_smoke\hex_in\frame_000000.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\sim\activity.saif -VivadoBat E:\Vivado\2023.2\bin\vivado.bat`
+### 3.2 Live camera -> one combined demo video
 
-- Clock sweep with SAIF:
-   - `.\scripts\sweep_clock_with_saif.ps1 -PeriodsNs @(30.0,27.0,25.0) -FrameHex .\captures\d455\full640_smoke\hex_in\frame_000000.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\sim\activity.saif -VivadoBat E:\Vivado\2023.2\bin\vivado.bat`
+- .\scripts\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -Width 640 -Height 480 -FeedWidth 320 -FeedHeight 240 -Frames 12 -Fps 30
 
-- If a path error is detected in Vivado output, scripts now stop immediately and print the log path under `vivado_project/reports/`.
+Final artifact:
 
-Generated artifacts:
-- `captures/d455/<kernel>/raw/*.png`
-- `captures/d455/<kernel>/feed_rgb/*.png`
-- `captures/d455/<kernel>/processed/*.png`
-- `captures/d455/<kernel>/hex_in/*.hex`
-- `captures/d455/<kernel>/hex_out/*.hex`
+- captures/d455/output_live/final/realtime_comparison_all_kernels.mp4
 
-Final demo artifact:
-- `captures/d455/output_live/final/realtime_comparison_all_kernels.mp4`
+### 3.3 RTL speed benchmark matrix
 
-## Multi-frame benchmark campaign (640x480)
-- Run capture + RTL processing + summary for multiple kernels:
-   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/benchmark_campaign.py --workspace . --capture_dir captures/d455/campaign640 --frames 1 --width 640 --height 480 --fps 30 --kernels gaussian5 sharpen5 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe`
+- .\scripts\benchmark_rtl_speed.ps1 -OutDir captures/benchmark/rtl_speed -Widths @(160,320,640) -Heights @(120,240,480) -Kernels @("gaussian5","sharpen5","laplacian5")
 
-- Outputs:
-   - `captures/d455/campaign640/campaign_summary.json`
-   - `captures/d455/campaign640/rtl_benchmark_<kernel>.json`
-   - `captures/d455/campaign640/rtl_benchmark_<kernel>.csv`
+### 3.4 Vivado pre-board timing sweep
 
-## Speed benchmark (pre-board)
-- RTL simulation speed benchmark across resolutions/kernels:
-   - `.\\scripts\\benchmark_rtl_speed.ps1 -OutDir captures/benchmark/rtl_speed -Widths @(160,320,640) -Heights @(120,240,480) -Kernels @("gaussian5","sharpen5","laplacian5")`
+- .\scripts\sweep_clock_with_saif.ps1 -PeriodsNs @(50.0,40.0,35.0,30.0,25.0) -FrameHex .\captures\benchmark\rtl_speed\640x480\hex_in\frame_000000.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\sim\activity.saif
 
-- Vivado timing/power sweep benchmark (no board needed):
-   - `.\\scripts\\sweep_clock_with_saif.ps1 -PeriodsNs @(50.0,40.0,35.0,30.0,25.0) -FrameHex .\\hex\\test_frame_0.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\\sim\\activity.saif`
+## 4) Current architecture docs
 
-- Research summary:
-   - `docs/performance_research_2026-03-18.md`
+- docs/architecture.md
+- docs/board_streaming_guide.md
+- docs/bug_report_2026-03-18.md
+- docs/output_spec_check_2026-03-18.md
 
-## AXI wrapper baseline test
-- Compile and run AXI Stream wrapper testbench:
-   - `cd tb`
-   - `iverilog -g2012 -Wall -o ..\\sim\\sim_axi.vvp ..\\src\\top_convolution.sv ..\\src\\line_buffer_4.sv ..\\src\\kernel_loader.sv ..\\src\\mac_array_25x3.sv ..\\src\\pipeline_stage.sv ..\\src\\axi_stream_conv_wrapper.sv tb_axi_stream_conv_wrapper.sv`
-   - `vvp ..\\sim\\sim_axi.vvp`
+Consolidated seminar/run pack:
 
-## Project layout
-- docs/: architecture/spec/simulation notes
+- docs/Spec_FPGA.md
+- docs/Performance.md
+- docs/RTL_REPORT.md
+- docs/DESIGN_HARDWARE.md
+- docs/Guide_to_Run.md
+
+Architecture slide generator:
+
+- python python/generate_architecture_ppt.py --out docs/architecture_convolution_fpga.pptx
+
+## 5) Current implementation status
+
+- Verified in RTL simulation: identity5, gaussian5, sharpen5, emboss5, laplacian5.
+- Gaussian saturation bug fixed by moving to KERNEL_Q=8 and aligned golden kernels.
+- AXI-Lite write-address race fixed for AW/W same-cycle and split transactions.
+- Pre-board timing reference from sweep artifacts in captures/benchmark/vivado_speed.
+- Spec-upgrade status (post O3+O2):
+	- 40.000 MHz (25.000 ns): PASS, WNS=+0.460 ns, TNS=0
+	- 50.000 MHz (20.000 ns): FAIL, WNS=-4.540 ns, TNS=-653.446 ns
+	- 59.999 MHz (16.667 ns): FAIL, WNS=-7.873 ns, TNS=-1133.350 ns
+
+## 6) Repository layout
+
 - src/: SystemVerilog RTL modules
-- tb/: testbenches and sim Makefile
-- python/: data generation and golden model tools
-- hex/: frame hex files
-- sim/: generated simulation outputs
-- vivado_project/: reserved for synthesis flow
-
-## Verification and board bring-up docs
-- Pre-board verification gates: `docs/pre_board_verification_plan.md`
-- Board streaming with real data: `docs/board_streaming_guide.md`
-- SAIF power methodology: `docs/saif_power_flow.md`
+- tb/: simulation testbenches
+- scripts/: powershell flows (sim, benchmark, sweep)
+- python/: frame prep, golden model, processing, signoff tools
+- docs/: architecture and bring-up guides
+- captures/: generated benchmark/demo outputs

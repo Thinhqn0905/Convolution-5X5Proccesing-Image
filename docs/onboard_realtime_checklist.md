@@ -1,6 +1,6 @@
 # On-board Realtime Checklist
 
-Updated: 2026-03-18 (strict SAIF flow)
+Updated: 2026-03-18 (post O3/O2 spec-upgrade sweep)
 
 ## 1) Toolchain readiness
 - [x] Vivado executable resolved from E:/Vivado/2023.2/bin/vivado.bat
@@ -18,13 +18,11 @@ Updated: 2026-03-18 (strict SAIF flow)
 ## 3) Extracted signoff metrics (post-route)
 - Bring-up baseline: 20.000 MHz (period 50.000 ns)
 - Timing:
-  - WNS: +22.577 ns @ 50 ns
-  - TNS: 0.000 ns
-  - Setup failing endpoints: 0
-  - Hold WNS: +0.102 ns
-  - Status: PASS @ 50 ns (all user specified timing constraints are met)
-- Sweep checkpoint:
-  - 40.000 MHz (period 25.000 ns): FAIL (WNS=-1.060 ns, TNS=-121.329 ns)
+  - PASS @ 40.000 MHz (period 25.000 ns): WNS=+0.460 ns, TNS=0.000 ns
+  - PASS @ 37.037 MHz (period 27.000 ns): WNS=+2.460 ns, TNS=0.000 ns
+  - FAIL @ 50.000 MHz (period 20.000 ns): WNS=-4.540 ns, TNS=-653.446 ns
+  - FAIL @ 59.999 MHz (period 16.667 ns): WNS=-7.873 ns, TNS=-1133.350 ns
+  - Current clean production point: 40 MHz
 - Utilization:
   - Slice LUTs: 930 (1.75%)
   - Slice Registers: 203 (0.19%)
@@ -43,15 +41,15 @@ Updated: 2026-03-18 (strict SAIF flow)
 - [ ] SAIF mapping coverage high enough for final signoff confidence (current low)
 
 ## 5) Final readiness state
-- Realtime-ready: NO
+- Realtime-ready: PARTIAL
 - Blocking items:
-  1. Timing closure at production clock target (not only bring-up clock)
+  1. Stretch-goal timing closure beyond 40 MHz (50/60 MHz still fail)
   2. Full AXI stream/lite handshake hardening and DMA integration test
   3. Power estimation confidence uplift with meaningful activity mapping
 
 ## 6) Immediate next actions
-1. Raise clock stepwise (20 -> 30 -> 35 -> 40 MHz), re-run impl each step to find first clean production point.
-2. Keep pipelining around MAC/output and add optional register slice at wrapper output.
+1. If targeting >40 MHz, add optional output register slice in stream wrapper and re-run 20 ns / 16.667 ns sweep.
+2. Investigate multi-cycle floorplanning constraints for MAC-local paths only if functional protocol remains unchanged.
 3. Complete AXI protocol hardening testbench with randomized tready/backpressure and no overflow.
 4. Generate mapped SAIF from gate-level/post-synth simulation to improve power confidence.
 

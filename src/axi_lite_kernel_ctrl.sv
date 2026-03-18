@@ -41,6 +41,8 @@ module axi_lite_kernel_ctrl #(
     logic [31:0] reg_status;
 
     logic [ADDR_W-1:0] awaddr_latched;
+    logic              awaddr_valid;
+    logic [ADDR_W-1:0] write_addr;
 
     assign s_axil_awready = 1'b1;
     assign s_axil_wready = 1'b1;
@@ -48,6 +50,14 @@ module axi_lite_kernel_ctrl #(
 
     assign s_axil_bresp = 2'b00;
     assign s_axil_rresp = 2'b00;
+
+    always_comb begin
+        if (s_axil_awvalid) begin
+            write_addr = s_axil_awaddr;
+        end else begin
+            write_addr = awaddr_latched;
+        end
+    end
 
     always_ff @(posedge aclk) begin
         if (!aresetn) begin
@@ -60,16 +70,18 @@ module axi_lite_kernel_ctrl #(
             s_axil_rvalid <= 1'b0;
             s_axil_rdata <= '0;
             awaddr_latched <= '0;
+            awaddr_valid <= 1'b0;
         end else begin
             kernel_wr_en <= 1'b0;
             reg_status[0] <= overflow_flag;
 
             if (s_axil_awvalid) begin
                 awaddr_latched <= s_axil_awaddr;
+                awaddr_valid <= 1'b1;
             end
 
-            if (s_axil_awvalid && s_axil_wvalid) begin
-                case (awaddr_latched)
+            if (s_axil_wvalid && (s_axil_awvalid || awaddr_valid)) begin
+                case (write_addr)
                     6'h00: begin
                         reg_ctrl <= s_axil_wdata;
                     end
@@ -91,6 +103,7 @@ module axi_lite_kernel_ctrl #(
                     end
                 endcase
                 s_axil_bvalid <= 1'b1;
+                awaddr_valid <= 1'b0;
             end
 
             if (s_axil_bvalid && s_axil_bready) begin

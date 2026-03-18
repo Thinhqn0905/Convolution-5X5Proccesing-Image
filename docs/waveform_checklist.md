@@ -38,12 +38,12 @@ Use this checklist with GTKWave on `sim/dump.vcd`.
   - For 16x16: `12 * 12 = 144`
 
 ## Valid alignment through pipeline
-- `u_mac_array.valid_out` must be delayed by 1 clock relative to `u_line_buffer.valid_out`.
-- `out_valid` must follow this 1-cycle delayed pattern continuously during active output region.
+- `u_mac_array.valid_out` must be delayed by 2 clocks relative to `u_line_buffer.valid_out`.
+- `out_valid` must follow this 2-cycle delayed pattern continuously during active output region.
 
 ## Kernel programming sanity
 - During setup, `kernel_wr_en` must pulse 25 times.
-- Center tap index `12` must be written with value `16`.
+- Center tap index `12` must be written with value `256` for identity in Q8.
 - All other tap indices must be written with value `0`.
 
 ## Output correctness indicators
@@ -70,9 +70,9 @@ Use this checklist with GTKWave on `sim/dump.vcd`.
 
 ## 5-minute pass/fail checklist
 1. Confirm reset deasserts and input stream starts.
-2. Confirm kernel writes include index 12 value 16 and others 0.
+2. Confirm kernel writes include index 12 value 256 and others 0.
 3. Confirm first valid appears only after warm-up.
-4. Confirm `valid_out` in MAC is exactly 1 cycle after line-buffer valid.
+4. Confirm `valid_out` in MAC is exactly 2 cycles after line-buffer valid.
 5. Confirm no X on `out_pixel` when `out_valid=1`.
 6. Confirm final counters: `valid_count=144`, `mismatch_count=0`, `unknown_count=0`.
 7. Confirm `tb_out.hex` has 144 lines.
