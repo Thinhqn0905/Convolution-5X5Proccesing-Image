@@ -11,7 +11,7 @@ Luu y quan trong: Python KHONG lam convolution. Python chi capture/feed va goi R
 ## Script chinh
 - python/d455_stream_process.py
 - python/rtl_process_hex_frames.py
-- scripts/run_d455_pipeline.ps1
+- scripts/run_live_multi_kernel_demo.ps1
 
 ## Chay nhanh 1 kernel
 From workspace root:
@@ -22,11 +22,29 @@ C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_st
 C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/smoke/hex_in --out_dir captures/d455/smoke --kernel gaussian5 --width 640 --height 480 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe
 ```
 
-## Chay day du 3 kernel + regression
+## Realtime multi-kernel (gaussian5 + sharpen5 + laplacian5)
+
+Capture 1 lan tu D455, sau do xu ly va tao video preview cho tung kernel:
 
 ```powershell
-.\scripts\run_d455_pipeline.ps1
+.\scripts\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -Width 640 -Height 480 -FeedWidth 320 -FeedHeight 240 -Frames 12 -Fps 30
 ```
+
+Mac dinh script se tu dong xoa folder trung gian va chi giu 1 output cuoi:
+- `captures/d455/output_live/final/realtime_comparison_all_kernels.mp4`
+
+Neu can giu file trung gian de debug:
+```powershell
+.\scripts\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -KeepIntermediates
+```
+
+Don dep generated files/log cu:
+```powershell
+.\scripts\clean_project_generated.ps1
+```
+
+Artifact chinh cho demo:
+- `captures/d455/output_live/final/realtime_comparison_all_kernels.mp4`
 
 ## Benchmark N frame full 640x480 (sim/frame)
 Vi du benchmark 2 frame tu camera va xuat report:
@@ -48,6 +66,11 @@ Moi kernel co cau truc:
 - captures/d455/<kernel>/processed
 - captures/d455/<kernel>/hex_in
 - captures/d455/<kernel>/hex_out
+
+Voi luong Muc A, cung thu muc capture se co them:
+- captures/d455/<capture>/preview_side_by_side.mp4
+- captures/d455/<capture>/level_a_signoff.json
+- captures/d455/<capture>/level_a_signoff.md
 
 Ten file theo frame index, vi du:
 - frame_000000.png

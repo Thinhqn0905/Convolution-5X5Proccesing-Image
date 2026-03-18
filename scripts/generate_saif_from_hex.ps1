@@ -15,7 +15,9 @@ $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $framePath = (Resolve-Path $FrameHex).Path
 $hexTarget = Join-Path $repoRoot 'hex\test_frame_0.hex'
 
-Copy-Item -LiteralPath $framePath -Destination $hexTarget -Force
+if ([System.IO.Path]::GetFullPath($framePath) -ne [System.IO.Path]::GetFullPath($hexTarget)) {
+    Copy-Item -LiteralPath $framePath -Destination $hexTarget -Force
+}
 
 Push-Location $repoRoot
 try {

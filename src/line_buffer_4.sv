@@ -30,18 +30,19 @@ module line_buffer_4 #(
     logic [DATA_W-1:0] p2;
     logic [DATA_W-1:0] p3;
 
-    int i;
+    int i_ff;
+    int i_comb;
 
     always_ff @(posedge clk) begin
         if (rst) begin
             x_count <= '0;
             y_count <= '0;
-            for (i = 0; i < KSIZE; i++) begin
-                sr0[i] <= '0;
-                sr1[i] <= '0;
-                sr2[i] <= '0;
-                sr3[i] <= '0;
-                sr4[i] <= '0;
+            for (i_ff = 0; i_ff < KSIZE; i_ff++) begin
+                sr0[i_ff] <= '0;
+                sr1[i_ff] <= '0;
+                sr2[i_ff] <= '0;
+                sr3[i_ff] <= '0;
+                sr4[i_ff] <= '0;
             end
             valid_out <= 1'b0;
         end else begin
@@ -57,12 +58,12 @@ module line_buffer_4 #(
                 line1[x_count] <= line0[x_count];
                 line0[x_count] <= pixel_in;
 
-                for (i = 0; i < KSIZE-1; i++) begin
-                    sr0[i] <= sr0[i+1];
-                    sr1[i] <= sr1[i+1];
-                    sr2[i] <= sr2[i+1];
-                    sr3[i] <= sr3[i+1];
-                    sr4[i] <= sr4[i+1];
+                for (i_ff = 0; i_ff < KSIZE-1; i_ff++) begin
+                    sr0[i_ff] <= sr0[i_ff+1];
+                    sr1[i_ff] <= sr1[i_ff+1];
+                    sr2[i_ff] <= sr2[i_ff+1];
+                    sr3[i_ff] <= sr3[i_ff+1];
+                    sr4[i_ff] <= sr4[i_ff+1];
                 end
 
                 sr0[KSIZE-1] <= p3;
@@ -86,12 +87,12 @@ module line_buffer_4 #(
     end
 
     always_comb begin
-        for (i = 0; i < KSIZE; i++) begin
-            window_flat[(0*KSIZE+i)*DATA_W +: DATA_W] = sr0[i];
-            window_flat[(1*KSIZE+i)*DATA_W +: DATA_W] = sr1[i];
-            window_flat[(2*KSIZE+i)*DATA_W +: DATA_W] = sr2[i];
-            window_flat[(3*KSIZE+i)*DATA_W +: DATA_W] = sr3[i];
-            window_flat[(4*KSIZE+i)*DATA_W +: DATA_W] = sr4[i];
+        for (i_comb = 0; i_comb < KSIZE; i_comb++) begin
+            window_flat[(0*KSIZE+i_comb)*DATA_W +: DATA_W] = sr0[i_comb];
+            window_flat[(1*KSIZE+i_comb)*DATA_W +: DATA_W] = sr1[i_comb];
+            window_flat[(2*KSIZE+i_comb)*DATA_W +: DATA_W] = sr2[i_comb];
+            window_flat[(3*KSIZE+i_comb)*DATA_W +: DATA_W] = sr3[i_comb];
+            window_flat[(4*KSIZE+i_comb)*DATA_W +: DATA_W] = sr4[i_comb];
         end
     end
 endmodule

@@ -76,3 +76,26 @@ Use this checklist with GTKWave on `sim/dump.vcd`.
 5. Confirm no X on `out_pixel` when `out_valid=1`.
 6. Confirm final counters: `valid_count=144`, `mismatch_count=0`, `unknown_count=0`.
 7. Confirm `tb_out.hex` has 144 lines.
+
+## Level-A full-frame checklist (640x480 demo)
+
+Dung checklist nay sau khi chay:
+- `scripts/run_live_multi_kernel_demo.ps1`
+
+Muc tieu la chung minh output dung cho pipeline demo tren may (khong can board):
+
+1. `preview_side_by_side.mp4` mo duoc va hien thi day du cap Input / RTL Output.
+2. `level_a_signoff.md` bao `Final status: PASS`.
+3. `level_a_signoff.json` co:
+  - `checks.parity_ok = true`
+  - `checks.tb_ok = true`
+  - `checks.counters_ok = true`
+  - `checks.timing_ok = true`
+4. Trong `rtl_benchmark_<kernel>.json`:
+  - `all_tb_pass = true`
+  - Moi frame co `tb_status = PASS`
+  - Moi frame co `tb_mismatch_count = 0`
+  - Moi frame co `tb_unknown_count = 0`
+5. So frame giua `raw`, `feed_rgb`, `processed`, `hex_in`, `hex_out` phai parity theo frame index.
+
+Neu 1 trong cac dieu kien tren FAIL, khong duoc ket luan output dung.

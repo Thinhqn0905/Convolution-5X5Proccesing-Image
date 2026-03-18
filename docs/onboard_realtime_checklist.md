@@ -54,3 +54,15 @@ Updated: 2026-03-18 (strict SAIF flow)
 2. Keep pipelining around MAC/output and add optional register slice at wrapper output.
 3. Complete AXI protocol hardening testbench with randomized tready/backpressure and no overflow.
 4. Generate mapped SAIF from gate-level/post-synth simulation to improve power confidence.
+
+## 7) Level-A local demo evidence (no board)
+- [x] Local stream demo artifacts generated from captured frames:
+  - `captures/d455/benchmark640/preview_side_by_side.mp4`
+  - `captures/d455/benchmark640/level_a_signoff.md`
+  - `captures/d455/benchmark640/level_a_signoff.json`
+- [x] Level-A signoff status: PASS
+  - parity(raw/feed/processed/hex_in/hex_out) = PASS
+  - per-frame TB status = PASS
+  - mismatch total = 0
+  - unknown total = 0
+  - timing baseline check @50ns = PASS

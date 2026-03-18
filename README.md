@@ -23,8 +23,11 @@ Programmable RGB 5x5 convolution engine project scaffold (Week 1-2 implementatio
   - `.\\scripts\\run_regression.ps1`
 
 ## D455 camera pipeline
-- Stream Intel RealSense D455 in capture/feed mode, then process by RTL simulation and export before/after artifacts:
-   - `.\\scripts\\run_d455_pipeline.ps1`
+- Realtime multi-kernel flow (capture once, process gaussian/sharpen/laplacian, output one final combined video):
+   - `.\\scripts\\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -Width 640 -Height 480 -FeedWidth 320 -FeedHeight 240 -Frames 12 -Fps 30`
+
+- Clean generated captures/logs while keeping final output:
+   - `.\\scripts\\clean_project_generated.ps1 -KeepOutputDir captures/d455/output_live/final`
 
 - Run capture/feed only (no software convolution):
    - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 640 --feed_height 480 --duration_sec 3 --max_frames 1 --save_every 1 --out_dir captures/d455/smoke`
@@ -48,6 +51,9 @@ Generated artifacts:
 - `captures/d455/<kernel>/hex_in/*.hex`
 - `captures/d455/<kernel>/hex_out/*.hex`
 
+Final demo artifact:
+- `captures/d455/output_live/final/realtime_comparison_all_kernels.mp4`
+
 ## Multi-frame benchmark campaign (640x480)
 - Run capture + RTL processing + summary for multiple kernels:
    - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/benchmark_campaign.py --workspace . --capture_dir captures/d455/campaign640 --frames 1 --width 640 --height 480 --fps 30 --kernels gaussian5 sharpen5 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe`
@@ -56,6 +62,16 @@ Generated artifacts:
    - `captures/d455/campaign640/campaign_summary.json`
    - `captures/d455/campaign640/rtl_benchmark_<kernel>.json`
    - `captures/d455/campaign640/rtl_benchmark_<kernel>.csv`
+
+## Speed benchmark (pre-board)
+- RTL simulation speed benchmark across resolutions/kernels:
+   - `.\\scripts\\benchmark_rtl_speed.ps1 -OutDir captures/benchmark/rtl_speed -Widths @(160,320,640) -Heights @(120,240,480) -Kernels @("gaussian5","sharpen5","laplacian5")`
+
+- Vivado timing/power sweep benchmark (no board needed):
+   - `.\\scripts\\sweep_clock_with_saif.ps1 -PeriodsNs @(50.0,40.0,35.0,30.0,25.0) -FrameHex .\\hex\\test_frame_0.hex -Kernel gaussian5 -Width 640 -Height 480 -SaifOut .\\sim\\activity.saif`
+
+- Research summary:
+   - `docs/performance_research_2026-03-18.md`
 
 ## AXI wrapper baseline test
 - Compile and run AXI Stream wrapper testbench:

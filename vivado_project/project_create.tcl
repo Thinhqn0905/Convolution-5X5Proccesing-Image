@@ -15,7 +15,9 @@ set src_list [list \
     [file normalize "./src/line_buffer_4.sv"] \
     [file normalize "./src/kernel_loader.sv"] \
     [file normalize "./src/mac_array_25x3.sv"] \
-    [file normalize "./src/pipeline_stage.sv"]
+    [file normalize "./src/pipeline_stage.sv"] \
+    [file normalize "./src/axi_stream_conv_wrapper.sv"] \
+    [file normalize "./src/axi_lite_kernel_ctrl.sv"]
 ]
 
 foreach f $src_list {
@@ -30,5 +32,5 @@ if {[file exists $xdc_file]} {
 }
 
 update_compile_order -fileset sources_1
-save_project_as $proj_name $proj_dir -force
+close_project
 puts "Project created at: $proj_dir"

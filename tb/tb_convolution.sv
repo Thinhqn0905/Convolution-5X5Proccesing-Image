@@ -1,8 +1,17 @@
 `timescale 1ns/1ps
 
 module tb_convolution;
+`ifndef TB_IMAGE_W
     localparam int IMAGE_W = 16;
+`else
+    localparam int IMAGE_W = `TB_IMAGE_W;
+`endif
+
+`ifndef TB_IMAGE_H
     localparam int IMAGE_H = 16;
+`else
+    localparam int IMAGE_H = `TB_IMAGE_H;
+`endif
     localparam int KSIZE = 5;
     localparam int PIXELS = IMAGE_W * IMAGE_H;
     localparam int EXPECT_VALID = (IMAGE_W - (KSIZE - 1)) * (IMAGE_H - (KSIZE - 1));

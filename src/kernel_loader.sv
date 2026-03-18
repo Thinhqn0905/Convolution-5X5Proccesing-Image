@@ -14,12 +14,13 @@ module kernel_loader #(
 );
     localparam int TAPS = KSIZE * KSIZE;
     logic signed [COEFF_W-1:0] coeff_mem [0:TAPS-1];
-    int i;
+    int i_ff;
+    int i_comb;
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            for (i = 0; i < TAPS; i++) begin
-                coeff_mem[i] <= '0;
+            for (i_ff = 0; i_ff < TAPS; i_ff++) begin
+                coeff_mem[i_ff] <= '0;
             end
             coeff_mem[TAPS/2] <= (1 <<< KERNEL_Q);
         end else if (wr_en) begin
@@ -28,8 +29,8 @@ module kernel_loader #(
     end
 
     always_comb begin
-        for (i = 0; i < TAPS; i++) begin
-            kernel_flat[(i*COEFF_W) +: COEFF_W] = coeff_mem[i];
+        for (i_comb = 0; i_comb < TAPS; i_comb++) begin
+            kernel_flat[(i_comb*COEFF_W) +: COEFF_W] = coeff_mem[i_comb];
         end
     end
 endmodule

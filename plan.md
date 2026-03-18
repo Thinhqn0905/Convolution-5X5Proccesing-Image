@@ -85,7 +85,7 @@ Muc tieu:
 Deliverable:
 - Script stream camera: python/d455_stream_process.py
 - Script xu ly feed bang RTL simulation: python/rtl_process_hex_frames.py
-- Script orchestration: scripts/run_d455_pipeline.ps1
+- Script orchestration: scripts/run_live_multi_kernel_demo.ps1
 - Output frame bundles trong captures/d455/*
 Tieu chi pass:
 - Co anh raw, feed_rgb, processed cung frame index.
@@ -170,7 +170,7 @@ Noi dung bat buoc:
 ## 5. Lenh chay chuan (runbook)
 
 ## Camera stream + xuat anh
-- scripts/run_d455_pipeline.ps1
+- scripts/run_live_multi_kernel_demo.ps1
 
 ## Chay 1 kernel camera ngắn
 - C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 16 --feed_height 16 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke
@@ -238,3 +238,17 @@ Tai lieu bat buoc:
 - docs/pre_board_verification_plan.md
 - docs/board_streaming_guide.md
 - docs/saif_power_flow.md
+
+## 11. Delta implementation (2026-03-18, Muc A local)
+- Da them luong 1 lenh de tao demo xem output va bao cao pass/fail:
+  - scripts/run_live_multi_kernel_demo.ps1
+- Da them tool tao video side-by-side input/output:
+  - python/build_side_by_side_video.py
+- Da them tool signoff local:
+  - python/signoff_level_a.py
+- Da nang report frame-level trong RTL processing:
+  - python/rtl_process_hex_frames.py (tb_status, mismatch, unknown, valid counters)
+- Artifact demo local da tao tren bo capture benchmark:
+  - captures/d455/benchmark640/preview_side_by_side.mp4
+  - captures/d455/benchmark640/level_a_signoff.md
+  - captures/d455/benchmark640/level_a_signoff.json

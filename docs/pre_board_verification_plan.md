@@ -25,7 +25,7 @@ Pass criteria:
 
 Commands:
 ```powershell
-.\scripts\run_d455_pipeline.ps1
+.\scripts\run_live_multi_kernel_demo.ps1 -CaptureRoot captures/d455/output_live -Width 640 -Height 480 -FeedWidth 320 -FeedHeight 240 -Frames 12 -Fps 30
 ```
 
 Pass criteria:

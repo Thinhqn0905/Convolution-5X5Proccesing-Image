@@ -1,0 +1,101 @@
+[
+    {
+        "Width":  160,
+        "Height":  120,
+        "Kernel":  "gaussian5",
+        "SimWallMs":  5568.665,
+        "SimFps":  0.179576,
+        "SimCycles":  19334,
+        "HwFpsAt20MHz":  1034.447,
+        "HwFpsAt40MHz":  2068.894,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  160,
+        "Height":  120,
+        "Kernel":  "sharpen5",
+        "SimWallMs":  5649.094,
+        "SimFps":  0.17702,
+        "SimCycles":  19334,
+        "HwFpsAt20MHz":  1034.447,
+        "HwFpsAt40MHz":  2068.894,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  160,
+        "Height":  120,
+        "Kernel":  "laplacian5",
+        "SimWallMs":  5329.478,
+        "SimFps":  0.187636,
+        "SimCycles":  19334,
+        "HwFpsAt20MHz":  1034.447,
+        "HwFpsAt40MHz":  2068.894,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  320,
+        "Height":  240,
+        "Kernel":  "gaussian5",
+        "SimWallMs":  18621.318,
+        "SimFps":  0.053702,
+        "SimCycles":  76934,
+        "HwFpsAt20MHz":  259.963,
+        "HwFpsAt40MHz":  519.926,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  320,
+        "Height":  240,
+        "Kernel":  "sharpen5",
+        "SimWallMs":  18431.292,
+        "SimFps":  0.054256,
+        "SimCycles":  76934,
+        "HwFpsAt20MHz":  259.963,
+        "HwFpsAt40MHz":  519.926,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  320,
+        "Height":  240,
+        "Kernel":  "laplacian5",
+        "SimWallMs":  18126.947,
+        "SimFps":  0.055166,
+        "SimCycles":  76934,
+        "HwFpsAt20MHz":  259.963,
+        "HwFpsAt40MHz":  519.926,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  640,
+        "Height":  480,
+        "Kernel":  "gaussian5",
+        "SimWallMs":  71541.373,
+        "SimFps":  0.013978,
+        "SimCycles":  307334,
+        "HwFpsAt20MHz":  65.076,
+        "HwFpsAt40MHz":  130.152,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  640,
+        "Height":  480,
+        "Kernel":  "sharpen5",
+        "SimWallMs":  70951.544,
+        "SimFps":  0.014094,
+        "SimCycles":  307334,
+        "HwFpsAt20MHz":  65.076,
+        "HwFpsAt40MHz":  130.152,
+        "TbAllPass":  true
+    },
+    {
+        "Width":  640,
+        "Height":  480,
+        "Kernel":  "laplacian5",
+        "SimWallMs":  69093.404,
+        "SimFps":  0.014473,
+        "SimCycles":  307334,
+        "HwFpsAt20MHz":  65.076,
+        "HwFpsAt40MHz":  130.152,
+        "TbAllPass":  true
+    }
+]
