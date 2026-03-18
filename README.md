@@ -22,6 +22,19 @@ Programmable RGB 5x5 convolution engine project scaffold (Week 1-2 implementatio
 - Run all required kernels (identity, gaussian, sharpen, emboss, laplacian):
   - `.\\scripts\\run_regression.ps1`
 
+## D455 camera pipeline
+- Stream Intel RealSense D455, process continuously, and export before/after artifacts:
+   - `.\\scripts\\run_d455_pipeline.ps1`
+
+- Run a short smoke test for one kernel:
+   - `C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --kernel gaussian5 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke`
+
+Generated artifacts:
+- `captures/d455/<kernel>/raw/*.png`
+- `captures/d455/<kernel>/processed/*.png`
+- `captures/d455/<kernel>/hex_in/*.hex`
+- `captures/d455/<kernel>/hex_out/*.hex`
+
 ## Project layout
 - docs/: architecture/spec/simulation notes
 - src/: SystemVerilog RTL modules

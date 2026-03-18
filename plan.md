@@ -1,208 +1,173 @@
-# PLAN ĐỒ ÁN: Programmable RGB 5x5 Convolution Engine  
-**Môn học: Seminar Audio-Video (Xử lý ảnh/video + Kỹ thuật IC số SystemVerilog)**  
-**Thời gian: 6 tuần**  
-**Sinh viên:** Pham Quoc Thinh
-**Board:** Zync
-**Camera:** Intel RealSense D455 (capture RGB → hex stream)  
-**Mục tiêu chính:** Throughput ≥ 300 MPixels/s (4-8 pixel/clock, 120 fps @720p), kernel programmable realtime, pipeline sâu + DSP48E1  
+# PLAN CHI TIET DO AN: RGB 5x5 CONVOLUTION ENGINE (ZYNQ + D455)
 
-## 0. Trạng thái triển khai hiện tại (2026-03-17)
+## 1. Muc tieu va pham vi
+- Xay dung pipeline 5x5 RGB convolution co kernel nap runtime.
+- Hoan tat luong: camera Intel RealSense D455 -> stream du lieu -> xu ly -> xuat anh truoc/sau.
+- Duy tri bo test regression cho RTL va doi chieu output.
+- Chot duoc tai lieu tong ket cho seminar (demo + report + so lieu).
 
-### Đã hoàn thành
-- Khởi tạo cấu trúc dự án: `src/`, `tb/`, `python/`, `docs/`, `scripts/`, `sim/`, `hex/`.
-- Có baseline RTL 5x5: `line_buffer_4.sv`, `mac_array_25x3.sv`, `kernel_loader.sv`, `top_convolution.sv`.
-- Nâng testbench thành self-check: đọc `hex/test_frame_0.hex`, tự so expected pixel, tạo `sim/tb_out.hex`.
-- Testbench đã hỗ trợ kernel/expected từ file (`sim/kernel.hex`, `sim/expected.hex`) để chạy regression nhiều kernel.
-- Flow simulation Windows chạy ổn qua `scripts/run_sim.ps1`.
-- Đã có `scripts/run_regression.ps1` chạy full bộ kernel: identity, gaussian, sharpen, emboss, laplacian.
-- Đã có skeleton Vivado: `vivado_project/project_create.tcl`, `vivado_project/run_synth.tcl`, `vivado_project/constraints.xdc`.
-- Checklist xem sóng đã có trong `docs/waveform_checklist.md`.
+## 2. Trang thai hien tai (2026-03-18)
 
-### Kết quả kiểm chứng gần nhất
-- `TB PASS: valid_count=144 expected=144`
-- `sim/tb_out.hex` có 144 dòng (đúng với công thức `(W-4)*(H-4)` khi `W=H=16`, `KSIZE=5`).
-- Regression 5 kernel đều PASS với 144 mẫu/output case.
+## Da hoan thanh
+- RTL baseline da co: line buffer 5x5, kernel loader, MAC 25x3, top integration.
+- Testbench self-check da co va da regression 5 kernel PASS.
+- Pipeline D455 da chay that:
+  - Stream lien tuc tren may hien tai.
+  - Da luu anh truoc xu ly va sau xu ly.
+  - Da xuat hex input/output theo frame.
+- Skeleton Vivado da co (create project, run synth/impl, constraints mau).
 
-### Việc kế tiếp (ưu tiên)
-1. Nối testbench với Python golden model cho so sánh pixel-wise nhiều kernel.
-2. Tạo regression script (Gaussian/Sharpen/Emboss/Laplacian) và báo cáo mismatch/PSNR.
-3. Sau khi regression ổn định mới chuyển synth/timing optimization.
+## Ket qua chay that gan nhat
+- D455 stream (8s/kernel):
+  - gaussian5: 88 frame, ~10.02 fps
+  - sharpen5: 92 frame, ~10.48 fps
+  - laplacian5: 90 frame, ~10.21 fps
+- RTL regression:
+  - identity5, gaussian5, sharpen5, emboss5, laplacian5: PASS
+  - valid_count = 144/144 moi case (test 16x16)
 
----
+## Artifact da tao
+- captures/d455/gaussian5/raw + processed + hex_in + hex_out
+- captures/d455/sharpen5/raw + processed + hex_in + hex_out
+- captures/d455/laplacian5/raw + processed + hex_in + hex_out
+- sim/tb_out_<kernel>.hex va sim/expected_<kernel>.hex
 
-## 1. Tổng quan kế hoạch
-| Tuần | Phase | Mục tiêu chính | Deliverable | % Hoàn thành |
-|------|-------|----------------|-------------|--------------|
-| 1    | Research & Design | Block diagram + spec | Diagram + spec doc | 20% |
-| 2    | Implementation | RTL modules core | Code SV + sim basic | 40% |
-| 3    | Simulation & Verify | Test full pipeline | Testbench pass 95% | 60% |
-| 4    | Synthesis & Optimize | Timing closure + report | Utilization report | 75% |
-| 5    | Integration & Test | Hardware run | On-board test | 90% |
-| 6    | Demo & Report | Final demo + slide | Video + report | 100% |
+## 3. Research tom tat (cho phase camera + FPGA)
 
-**Rủi ro & Mitigation**  
-- Timing fail → ưu tiên pipeline + floorplan  
-- D455 stream → Python hex fixed trước, sau mới realtime  
-- Audio add-on (nếu thừa thời gian) → overlay FIR spectrum (tuần 5)
+## 3.1 Tham khao camera va Python wrapper
+Nguon tham khao chinh:
+- librealsense Python examples:
+  - wrappers/python/examples/opencv_viewer_example.py
+  - wrappers/python/examples/align-depth2color.py
+  - wrappers/python/examples/frame_queue_example.py
 
----
+Ket luan ap dung:
+- Dung rs.pipeline + rs.config + enable_stream(color, BGR8) la luong co ban on dinh.
+- Dung wait_for_frames() theo vong lap cho stream lien tuc.
+- Neu can toc do cao hon, uu tien frame queue/multi-thread va giam tan suat ghi file.
 
-## 2. Công cụ sử dụng (ưu tiên open-source để vibe nhanh)
+## 3.2 Tham khao phan cung so va DSP
+Nguon tham khao chinh:
+- AMD/Xilinx UG479 (DSP48E1)
+- AMD/Xilinx UG902 (synthesis flow)
 
-### Simulation (quan trọng nhất – làm trước Vivado)
-- **Icarus Verilog (iverilog) + GTKWave** ← **ƯU TIÊN SỐ 1** (vibe kiểm chứng testbench cực nhanh, free, terminal)  
-  Lý do: Chạy ngay trên Linux/Windows, waveform đẹp, debug 1 frame trong <10 giây.  
-  Command mẫu (dùng mãi trong phase 2-3):
-  ```bash
-  iverilog -g2012 -Wall top.sv line_buffer.sv mac_array.sv tb_convolution.sv -o sim
-  vvp sim
-  gtkwave dump.vcd &
-Sau khi testbench ổn (vibe OK) → migrate sang Vivado Simulator (để synthesize).
+Ket luan ap dung:
+- MAC 25 tap RGB can uu tien pipeline ro rang truoc khi day fmax.
+- Gate quan trong cho phase synth: WNS > 0, thong ke DSP/BRAM/Fmax, sau do moi chot throughput.
 
-Design & Synthesis
+## 4. Ke hoach phase chi tiet tu hien tai den final
 
-Vivado 2022+ (SystemVerilog full)
-Draw.io / Excalidraw (block diagram)
-Python 3 + librealsense (capture hex từ D455)
-GTKWave (waveform)
-OBS Studio (record demo)
+## Phase A - Camera stream + output before/after (DA XONG)
+Muc tieu:
+- Stream D455 lien tuc va xuat anh truoc/sau xu ly.
+Deliverable:
+- Script stream camera: python/d455_stream_process.py
+- Script orchestration: scripts/run_d455_pipeline.ps1
+- Output frame bundles trong captures/d455/*
+Tieu chi pass:
+- Co anh raw va processed cung frame index.
+- Co hex_in va hex_out cung frame index.
 
-Verification
+## Phase B - RTL regression toan bo kernel (DA XONG)
+Muc tieu:
+- Xac nhan tinh dung RTL voi bo kernel bat buoc.
+Deliverable:
+- scripts/run_regression.ps1
+- python/prepare_case.py (tao kernel.hex va expected.hex)
+Tieu chi pass:
+- 5/5 kernel PASS.
+- Moi case co 144 output line cho test 16x16.
 
-Python golden model (numpy.convolve + PSNR/SSIM)
-Vivado Timing/Power Analyzer (sau phase 4)
+## Phase C - Test case mo rong can lam tiep (CAN THUC HIEN)
+Muc tieu:
+- Tang do tin cay truoc khi vao synth/hardware demo.
+Cong viec:
+1. Them test case reset giua frame.
+2. Them test case valid gap/back-pressure.
+3. Them test case overflow/saturation voi kernel am/duong lon.
+4. Them test 32x32 va 640x480 synthetic profile.
+Deliverable:
+- File testbench mo rong trong tb/.
+- Bao cao pass/fail theo tung case.
+Gate pass:
+- Khong X/Z khi out_valid=1.
+- mismatch_count=0 voi expected stream.
 
+## Phase D - Synthesis va timing closure (CAN THUC HIEN)
+Muc tieu:
+- Dat gate ky thuat >=250 MP/s (muc thuc dung), huong toi 300 MP/s.
+Cong viec:
+1. Chay vivado_project/project_create.tcl.
+2. Chay vivado_project/run_synth.tcl.
+3. Phan tich report: timing_post_route.rpt, util_post_route.rpt, power_post_route.rpt.
+4. Toi uu: bo sung pipeline stage neu can, can bang resource.
+Deliverable:
+- report timing/resource/power.
+Gate pass:
+- WNS > 0.
+- Co cong thuc throughput ro rang theo freq x pixel_per_clock.
 
-3. Chi tiết từng Phase
-PHASE 1: Research & High-Level Design (Tuần 1)
-Mục tiêu: Xác định spec + architecture
-Công việc:
+## Phase E - Hardware integration realtime (CAN THUC HIEN)
+Muc tieu:
+- Chay duoc duong camera -> FPGA -> output hien thi/ghi ket qua.
+Cong viec:
+1. Chon giao tiep runtime kernel (AXI-Lite/UART).
+2. Hoan tat wrapper stream input/output.
+3. Dong bo format pixel va toc do truyen.
+4. Chay demo switch kernel realtime.
+Deliverable:
+- Video demo truc tiep.
+- Log thoi gian va fps he thong.
+Gate pass:
+- Chuyen kernel khong vo frame.
+- He thong chay on dinh trong thoi gian demo.
 
-Vẽ block diagram (AXI-Stream In → Line Buffer 4 dòng → MAC 25x3 → Normalize → Out)
-Define parameter: 5x5 kernel (25×3 regs), fixed-point Q8.4, resolution 640x480
-Capture 10 frame test từ D455 (hex 24-bit RGB)
+## Phase F - Bao cao va chot seminar (CAN THUC HIEN)
+Muc tieu:
+- Chot slide + report day du ky thuat.
+Noi dung bat buoc:
+1. Kien truc 5x5 va dataflow.
+2. Ket qua camera stream truoc/sau.
+3. Ket qua regression va waveform checklist.
+4. Ket qua synthesis/timing/resource.
+5. Bai hoc kinh nghiem va huong mo rong.
 
-Công cụ:
+## 5. Lenh chay chuan (runbook)
 
-Draw.io + Python script D455
+## Camera stream + xuat anh
+- scripts/run_d455_pipeline.ps1
 
-Nội dung tham khảo:
+## Chay 1 kernel camera ngắn
+- C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --kernel gaussian5 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke
 
-GitHub: 5usu/convolutions-on-fpga (line buffer + MAC)
-Paper: "Energy Efficient Image Convolution on FPGA" (Stanford)
-Xilinx UG479 (DSP48E1)
-Librealsense Python docs
+## Regression RTL
+- scripts/run_regression.ps1
 
-Milestone: Block diagram + file test_frame_0.hex + spec doc
-Script Python capture: (hiện tại chưa có cam chưa cần chạy ngay cái này chỉ thấy nó trả output đứng chức năng)
-Pythonimport pyrealsense2 as rs
-import numpy as np
-pipeline = rs.pipeline()
-config = rs.config(); config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-pipeline.start(config)
-for i in range(10):
-    img = np.asanyarray(pipeline.wait_for_frames().get_color_frame().get_data())
-    with open(f'test_frame_{i}.hex', 'w') as f:
-        for p in img.reshape(-1,3): f.write(f'{p[2]:02x}{p[1]:02x}{p[0]:02x}\n')
-PHASE 2: Module Implementation (Tuần 2)
-Mục tiêu: Code đầy đủ RTL
-Modules chính:
+## Dem so dong output testbench
+- (Get-Content .\sim\tb_out.hex | Measure-Object -Line).Lines
 
-line_buffer_4.sv (BRAM dual-port)
-mac_array_25x3.sv (unroll 25 MAC/channel, DSP48E1)
-kernel_loader.sv (AXI-Lite hoặc simple reg)
-pipeline_stage.sv (5 stage)
-top_convolution.sv
+## 6. KPI va gate chap nhan
+- Functional:
+  - 5 kernel regression PASS.
+  - testbench self-check mismatch=0, unknown=0.
+- Camera pipeline:
+  - Co cap anh before/after cho moi kernel da chay.
+  - Co hex input/output frame theo index.
+- Synthesis:
+  - WNS > 0.
+  - Co bang resource DSP/BRAM.
+- Demo:
+  - Trinh dien switch kernel voi luong du lieu thuc te.
 
-Công cụ:
+## 7. Rui ro va giam thieu
+- FPS camera software thap khi ghi file nhieu:
+  - Giam save_every, tach thread ghi file, uu tien xử ly tren FPGA.
+- Sai lech mapping output giua software va RTL:
+  - Giu nguyen quy tac valid window x>=4, y>=4 trong script expected.
+- Timing fail sau synth:
+  - Tang pipeline stage, don gian hoa duong valid/control, toi uu ranh gioi module.
 
-VSCode + iverilog (test từng module ngay)
-Python golden model
-
-Tham khảo:
-
-"High Throughput Spatial Convolution Filters on FPGAs" (Warwick)
-"Reconfigurable Convolution Implementation for CNNs"
-
-Milestone: Compile sạch + sim 32x32 frame với iverilog
-PHASE 3: Simulation & Verification (Tuần 3) ← PHASE QUAN TRỌNG NHẤT
-Mục tiêu: 95% functional correct
-Công việc:
-
-Viết testbench đầy đủ (tb_convolution.sv)
-Test tất cả kernel (Gaussian, Sharpen, Emboss, Laplacian)
-So sánh pixel-wise với Python (PSNR > 30 dB)
-Edge case: zero-pad border
-
-Công cụ VIBE:
-Bashiverilog -g2012 top.sv tb_convolution.sv -o sim
-vvp sim
-gtkwave dump.vcd   # ← vibe ngay waveform pipeline
-Sau khi vibe OK → chuyển Vivado Simulator.
-Tham khảo:
-
-Test vector từ librealsense examples
-"A Novel FPGA-based CNN Hardware Accelerator" (arXiv)
-
-Milestone: Testbench pass 95%, tất cả waveform sạch
-PHASE 4: Synthesis & Optimization (Tuần 4)
-Mục tiêu: Đạt throughput ≥ 300 MP/s
-Công việc:
-
-Synthesize → report DSP/BRAM/Freq
-Optimize pipeline, resource sharing
-Đo throughput: freq × pixels/clock
-
-Công cụ: Vivado Implementation + TCL script
-Tham khảo: Xilinx UG902 + UG479
-Milestone: Post-PnR: ≥300 MP/s, timing clean (WNS > 0)
-PHASE 5: Integration & Hardware Testing (Tuần 5)
-Công việc:
-
-Thêm AXI-Stream wrapper + VGA controller
-Load kernel realtime (button/uart)
-Stream hex từ Python → FPGA
-
-Công cụ: Vivado Hardware Manager + Python UART script
-Milestone: Demo realtime 1 clip D455 trên VGA
-PHASE 6: Demo & Report (Tuần 6)
-Công việc:
-
-Slide 15-20p (architecture 20%, throughput 30%, result 30%)
-Record video before/after (switch kernel realtime)
-Viết report (PDF)
-
-Công cụ: OBS Studio + LaTeX/Word
-Kế hoạch Evaluation & Demo (15 phút seminar):
-
-Setup (2p): D455 → hex → FPGA
-Live Demo (10p):
-Input video người di chuyển
-Nhấn nút switch kernel: Blur → Sharpen → Edge
-Split screen VGA: Original | Processed
-
-Results (3p): Chart throughput/resource (DSP < 50%, BRAM < 20%)
-Q&A
-
-Metrics đo lường:
-
-Throughput: ≥300 MP/s (Vivado report + counter)
-FPS: 60-120 @720p
-Quality: PSNR > 30 dB
-Resource: DSP/BRAM usage
-Latency: <5 ms/frame
-
-
-4. Folder structure gợi ý
-textconvolution_fpga/
-├── src/              # .sv files
-├── tb/               # testbench
-├── hex/              # test_frame_*.hex từ D455
-├── sim/              # dump.vcd
-├── python/           # golden + capture
-├── vivado_project/
-└── docs/             # plan.md + report.pdf + slides.pptx
-Bắt đầu ngay tuần 1: Chạy script Python capture + vẽ diagram.
-Khi nào cần: Mình sẽ gửi skeleton code line_buffer.sv + mac_array.sv + tb_convolution.sv đầy đủ (chạy được iverilog ngay).
-
-Xong viết lại toàn bộ Doc liên quan
+## 8. Cong viec tiep theo ngay lap tuc (48h)
+1. Them 3 test case mo rong: reset-mid-frame, valid-gap, saturation-stress.
+2. Chay synth batch va trich xuat report timing/resource dau tien.
+3. Chot interface runtime kernel cho hardware demo (UART hoac AXI-Lite).
