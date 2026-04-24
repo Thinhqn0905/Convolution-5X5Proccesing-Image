@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module top_convolution #(
-    parameter int IMAGE_WIDTH = 640,
+    parameter int IMAGE_WIDTH = 1920,
     parameter int DATA_W = 24,
     parameter int COEFF_W = 16,
     parameter int KSIZE = 5,

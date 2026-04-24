@@ -123,7 +123,7 @@ module tb_convolution;
         in_valid = 1'b0;
         in_pixel = '0;
 
-        repeat (80) @(posedge clk);
+        repeat (160) @(posedge clk);
 
         $fclose(out_file);
 

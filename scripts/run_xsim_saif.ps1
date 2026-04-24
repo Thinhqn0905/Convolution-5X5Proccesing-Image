@@ -37,7 +37,6 @@ try {
         '..\src\line_buffer_4.sv',
         '..\src\kernel_loader.sv',
         '..\src\mac_array_25x3.sv',
-        '..\src\pipeline_stage.sv',
         'tb_activity_saif.sv'
     )
     & $xvlogExe @xvlogArgs
