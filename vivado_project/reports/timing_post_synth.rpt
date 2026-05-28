@@ -1,12 +1,12 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2023.2 (win64) Build 4029153 Fri Oct 13 20:14:34 MDT 2023
-| Date         : Fri Apr 24 11:05:12 2026
+| Date         : Wed May 20 22:15:25 2026
 | Host         : DESKTOP-5BKHJFE running 64-bit major release  (build 9200)
 | Command      : report_timing_summary -file E:/PROJECTS/convolution_fpga/vivado_project/reports/timing_post_synth.rpt
 | Design       : top_convolution
-| Device       : 7z020-clg400
-| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
 | Design State : Synthesized
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -138,7 +138,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
     -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-      4.296        0.000                      0                25184        0.122        0.000                      0                25184        3.750        0.000                       0                  2707  
+      4.296        0.000                      0                25176        0.122        0.000                      0                25176        3.750        0.000                       0                  2699  
 
 
 All user specified timing constraints are met.
@@ -161,7 +161,7 @@ clk    {0.000 5.000}      10.000          100.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
 -----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-clk                 4.296        0.000                      0                25184        0.122        0.000                      0                25184        3.750        0.000                       0                  2707  
+clk                 4.296        0.000                      0                25176        0.122        0.000                      0                25176        3.750        0.000                       0                  2699  
 
 
 ------------------------------------------------------------------------------------------------
@@ -211,9 +211,9 @@ Slack (MET) :             4.296ns  (required time - arrival time)
   Data Path Delay:        4.124ns  (logic 4.124ns (100.000%)  route 0.000ns (0.000%))
   Logic Levels:           1  (DSP48E1=1)
   Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.128ns = ( 12.128 - 10.000 ) 
-    Source Clock Delay      (SCD):    2.456ns
-    Clock Pessimism Removal (CPR):    0.184ns
+    Destination Clock Delay (DCD):    2.704ns = ( 12.704 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.965ns
+    Clock Pessimism Removal (CPR):    0.116ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Total Input Jitter      (TIJ):    0.000ns
@@ -223,38 +223,38 @@ Slack (MET) :             4.296ns  (required time - arrival time)
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock clk rise edge)        0.000     0.000 r  
-                                                      0.000     0.000 r  clk (IN)
+    E3                                                0.000     0.000 r  clk (IN)
                          net (fo=0)                   0.000     0.000    clk
-                         IBUF (Prop_ibuf_I_O)         0.972     0.972 r  clk_IBUF_inst/O
-                         net (fo=1, unplaced)         0.800     1.771    clk_IBUF
-                         BUFG (Prop_bufg_I_O)         0.101     1.872 r  clk_IBUF_BUFG_inst/O
-                         net (fo=2706, unplaced)      0.584     2.456    clk_IBUF_BUFG
+    E3                   IBUF (Prop_ibuf_I_O)         1.482     1.482 r  clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.803     2.285    clk_IBUF
+                         BUFG (Prop_bufg_I_O)         0.096     2.381 r  clk_IBUF_BUFG_inst/O
+                         net (fo=2698, unplaced)      0.584     2.965    clk_IBUF_BUFG
                          DSP48E1                                      r  p_1_out__24/CLK
   -------------------------------------------------------------------    -------------------
                          DSP48E1 (Prop_dsp48e1_CLK_PCOUT[47])
-                                                      2.411     4.867 r  p_1_out__24/PCOUT[47]
-                         net (fo=1, unplaced)         0.000     4.867    p_1_out__24_n_106
+                                                      2.411     5.376 r  p_1_out__24/PCOUT[47]
+                         net (fo=1, unplaced)         0.000     5.376    p_1_out__24_n_106
                          DSP48E1 (Prop_dsp48e1_PCIN[47]_PCOUT[0])
-                                                      1.713     6.580 r  p_1_out__25/PCOUT[0]
-                         net (fo=1, unplaced)         0.000     6.580    u_mac_array/sub_b_q_reg[0]_0[0]
+                                                      1.713     7.089 r  p_1_out__25/PCOUT[0]
+                         net (fo=1, unplaced)         0.000     7.089    u_mac_array/sub_b_q_reg[0]_0[0]
                          DSP48E1                                      r  u_mac_array/sub_b_q_reg[0]/PCIN[0]
   -------------------------------------------------------------------    -------------------
 
                          (clock clk rise edge)       10.000    10.000 r  
-                                                      0.000    10.000 r  clk (IN)
+    E3                                                0.000    10.000 r  clk (IN)
                          net (fo=0)                   0.000    10.000    clk
-                         IBUF (Prop_ibuf_I_O)         0.838    10.838 r  clk_IBUF_inst/O
-                         net (fo=1, unplaced)         0.760    11.598    clk_IBUF
-                         BUFG (Prop_bufg_I_O)         0.091    11.689 r  clk_IBUF_BUFG_inst/O
-                         net (fo=2706, unplaced)      0.439    12.128    u_mac_array/clk_IBUF_BUFG
+    E3                   IBUF (Prop_ibuf_I_O)         1.411    11.411 r  clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.763    12.174    clk_IBUF
+                         BUFG (Prop_bufg_I_O)         0.091    12.265 r  clk_IBUF_BUFG_inst/O
+                         net (fo=2698, unplaced)      0.439    12.704    u_mac_array/clk_IBUF_BUFG
                          DSP48E1                                      r  u_mac_array/sub_b_q_reg[0]/CLK
-                         clock pessimism              0.184    12.311    
-                         clock uncertainty           -0.035    12.276    
+                         clock pessimism              0.116    12.820    
+                         clock uncertainty           -0.035    12.784    
                          DSP48E1 (Setup_dsp48e1_CLK_PCIN[0])
-                                                     -1.400    10.876    u_mac_array/sub_b_q_reg[0]
+                                                     -1.400    11.384    u_mac_array/sub_b_q_reg[0]
   -------------------------------------------------------------------
-                         required time                         10.876    
-                         arrival time                          -6.580    
+                         required time                         11.384    
+                         arrival time                          -7.089    
   -------------------------------------------------------------------
                          slack                                  4.296    
 
@@ -275,40 +275,40 @@ Slack (MET) :             0.122ns  (arrival time - required time)
   Data Path Delay:        0.338ns  (logic 0.147ns (43.552%)  route 0.191ns (56.448%))
   Logic Levels:           0  
   Clock Path Skew:        0.145ns (DCD - SCD - CPR)
-    Destination Clock Delay (DCD):    1.032ns
-    Source Clock Delay      (SCD):    0.678ns
-    Clock Pessimism Removal (CPR):    0.210ns
+    Destination Clock Delay (DCD):    1.082ns
+    Source Clock Delay      (SCD):    0.728ns
+    Clock Pessimism Removal (CPR):    0.209ns
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
                          (clock clk rise edge)        0.000     0.000 r  
-                                                      0.000     0.000 r  clk (IN)
+    E3                                                0.000     0.000 r  clk (IN)
                          net (fo=0)                   0.000     0.000    clk
-                         IBUF (Prop_ibuf_I_O)         0.200     0.200 r  clk_IBUF_inst/O
-                         net (fo=1, unplaced)         0.337     0.538    clk_IBUF
-                         BUFG (Prop_bufg_I_O)         0.026     0.564 r  clk_IBUF_BUFG_inst/O
-                         net (fo=2706, unplaced)      0.114     0.678    u_line_buffer/clk_IBUF_BUFG
+    E3                   IBUF (Prop_ibuf_I_O)         0.250     0.250 r  clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.338     0.588    clk_IBUF
+                         BUFG (Prop_bufg_I_O)         0.026     0.614 r  clk_IBUF_BUFG_inst/O
+                         net (fo=2698, unplaced)      0.114     0.728    u_line_buffer/clk_IBUF_BUFG
                          FDRE                                         r  u_line_buffer/x_count_reg[7]_rep__2/C
   -------------------------------------------------------------------    -------------------
-                         FDRE (Prop_fdre_C_Q)         0.147     0.825 r  u_line_buffer/x_count_reg[7]_rep__2/Q
-                         net (fo=210, unplaced)       0.191     1.015    u_line_buffer/line0_reg_0_255_0_0/A7
+                         FDRE (Prop_fdre_C_Q)         0.147     0.875 r  u_line_buffer/x_count_reg[7]_rep__2/Q
+                         net (fo=210, unplaced)       0.191     1.066    u_line_buffer/line0_reg_0_255_0_0/A7
                          RAMS64E                                      r  u_line_buffer/line0_reg_0_255_0_0/RAMS64E_A/WADR7
   -------------------------------------------------------------------    -------------------
 
                          (clock clk rise edge)        0.000     0.000 r  
-                                                      0.000     0.000 r  clk (IN)
+    E3                                                0.000     0.000 r  clk (IN)
                          net (fo=0)                   0.000     0.000    clk
-                         IBUF (Prop_ibuf_I_O)         0.389     0.389 r  clk_IBUF_inst/O
-                         net (fo=1, unplaced)         0.355     0.744    clk_IBUF
-                         BUFG (Prop_bufg_I_O)         0.029     0.773 r  clk_IBUF_BUFG_inst/O
-                         net (fo=2706, unplaced)      0.259     1.032    u_line_buffer/line0_reg_0_255_0_0/WCLK
+    E3                   IBUF (Prop_ibuf_I_O)         0.438     0.438 r  clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.356     0.794    clk_IBUF
+                         BUFG (Prop_bufg_I_O)         0.029     0.823 r  clk_IBUF_BUFG_inst/O
+                         net (fo=2698, unplaced)      0.259     1.082    u_line_buffer/line0_reg_0_255_0_0/WCLK
                          RAMS64E                                      r  u_line_buffer/line0_reg_0_255_0_0/RAMS64E_A/CLK
-                         clock pessimism             -0.210     0.823    
+                         clock pessimism             -0.209     0.873    
                          RAMS64E (Hold_rams64e_CLK_WADR7)
-                                                      0.071     0.894    u_line_buffer/line0_reg_0_255_0_0/RAMS64E_A
+                                                      0.071     0.944    u_line_buffer/line0_reg_0_255_0_0/RAMS64E_A
   -------------------------------------------------------------------
-                         required time                         -0.894    
-                         arrival time                           1.015    
+                         required time                         -0.944    
+                         arrival time                           1.066    
   -------------------------------------------------------------------
                          slack                                  0.122    
 

@@ -1,0 +1,71 @@
+{
+  "source": "Intel RealSense D455 RGB",
+  "capture_resolution": [
+    1280,
+    720
+  ],
+  "captured_raw_shape": null,
+  "feed_resolution": [
+    1920,
+    1080
+  ],
+  "kernel": "emboss5",
+  "kernel_coefficients_q8": [
+    [
+      -32,
+      -16,
+      0,
+      16,
+      32
+    ],
+    [
+      -16,
+      0,
+      16,
+      32,
+      16
+    ],
+    [
+      0,
+      16,
+      32,
+      16,
+      0
+    ],
+    [
+      16,
+      32,
+      16,
+      0,
+      -16
+    ],
+    [
+      32,
+      16,
+      0,
+      -16,
+      -32
+    ]
+  ],
+  "rtl_tb_status": "PASS",
+  "rtl_valid_samples": 2061616,
+  "rtl_expected_valid_samples": 2061616,
+  "golden_compare": "PASS",
+  "mismatch_pixels": 0,
+  "mismatch_channels": 0,
+  "compile_wall_ms": 64.9690999998711,
+  "sim_wall_ms": 461502.3858999921,
+  "paths": {
+    "raw_png": "captures/d455/fullhd_rtl_frame/raw/frame_000000.png",
+    "feed_png": "captures/d455/fullhd_rtl_frame/feed_rgb/frame_000000.png",
+    "feed_hex": "captures/d455/fullhd_rtl_frame/hex_in/frame_000000.hex",
+    "processed_png": "captures/d455/fullhd_rtl_frame/emboss5/processed/frame_000000.png",
+    "rtl_hex_out": "captures/d455/fullhd_rtl_frame/emboss5/hex_out/frame_000000.hex",
+    "report_json": "captures/d455/fullhd_rtl_frame/emboss5/fullhd_rtl_emboss5_report.json"
+  },
+  "sha1": {
+    "feed_png": "ccfc3c338d1fe270cedafa4df65764ef075680c9",
+    "processed_png": "db457da5ec5ed5618585982dd8fa44a7a6af750e",
+    "rtl_hex_out": "26a4b192aeb32b087969f36c685027a946f14ed2"
+  }
+}

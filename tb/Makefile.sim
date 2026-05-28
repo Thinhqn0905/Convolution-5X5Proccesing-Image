@@ -4,8 +4,7 @@ VCD_OUT=../sim/dump.vcd
 RTL=../src/top_convolution.sv \
     ../src/line_buffer_4.sv \
     ../src/kernel_loader.sv \
-    ../src/mac_array_25x3.sv \
-    ../src/pipeline_stage.sv
+    ../src/mac_array_25x3.sv
 
 TB=tb_convolution.sv
 

@@ -1,0 +1,3 @@
+freq_mhz,period_ns,status,wns_ns,whs_ns,fmax_est_mhz,run_status,timing_report
+147,6.802721,FAIL,-0.054000,0.098000,145.842304,route_design Complete, Failed Timing!,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine2/147MHz/timing_post_route.rpt
+146,6.849315,PASS,0.041000,0.057000,146.879219,route_design Complete!,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine2/146MHz/timing_post_route.rpt

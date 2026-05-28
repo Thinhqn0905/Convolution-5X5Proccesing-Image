@@ -1,0 +1,2125 @@
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source {E:\PROJECTS\convolution_fpga\vivado_project\fmax_sweep_refine\run_fmax_sweep_refine.tcl}
+# set part_name "xc7a100tcsg324-1"
+# set top_name "top_convolution"
+# set out_dir [file normalize "vivado_project/fmax_sweep_refine"]
+# file mkdir $out_dir
+# if {[llength $argv] > 0} {
+#     set freqs_mhz $argv
+# } else {
+#     set freqs_mhz [list 150 140 130 120 115 110 108 106 105 100]
+# }
+# set srcs [list \
+#     [file normalize "src/top_convolution.sv"] \
+#     [file normalize "src/line_buffer_4.sv"] \
+#     [file normalize "src/kernel_loader.sv"] \
+#     [file normalize "src/mac_array_25x3.sv"] \
+# ]
+# set_param general.maxThreads 4
+# set csv_path [file join $out_dir fmax_sweep_summary.csv]
+# set csv [open $csv_path "w"]
+# puts $csv "freq_mhz,period_ns,status,wns_ns,whs_ns,fmax_est_mhz,run_status,timing_report"
+# set first_pass ""
+# foreach freq $freqs_mhz {
+#     set period [expr {1000.0 / double($freq)}]
+#     set run_dir [file join $out_dir "${freq}MHz"]
+#     set proj_dir [file join $run_dir project]
+#     file mkdir $run_dir
+# 
+#     puts "\n=== FMAX_SWEEP: ${freq} MHz period=${period} ns ==="
+# 
+#     catch {close_project}
+#     create_project "fmax_${freq}" $proj_dir -part $part_name -force
+#     add_files -norecurse $srcs
+#     set_property top $top_name [current_fileset]
+# 
+#     set xdc_path [file join $run_dir clock.xdc]
+#     set xdc [open $xdc_path "w"]
+#     puts $xdc [format "create_clock -name clk -period %.6f \[get_ports clk\]" $period]
+#     close $xdc
+#     add_files -fileset constrs_1 -norecurse $xdc_path
+# 
+#     update_compile_order -fileset sources_1
+# 
+#     set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
+#     set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE ExploreWithRemap [get_runs impl_1]
+#     set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+#     set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+#     set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_1]
+#     set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
+# 
+#     set run_status "UNKNOWN"
+#     set status "FAIL"
+#     set wns -9999.0
+#     set whs -9999.0
+#     set fmax_est 0.0
+#     set timing_rpt [file join $run_dir timing_post_route.rpt]
+#     set util_rpt [file join $run_dir util_post_route.rpt]
+# 
+#     if {[catch {
+#         launch_runs synth_1 -jobs 4
+#         wait_on_run synth_1
+#         set synth_status [get_property STATUS [get_runs synth_1]]
+#         if {![string match "*Complete*" $synth_status]} {
+#             error "synth_1 did not complete: $synth_status"
+#         }
+# 
+#         launch_runs impl_1 -to_step route_design -jobs 4
+#         wait_on_run impl_1
+#         set run_status [get_property STATUS [get_runs impl_1]]
+# 
+#         open_run impl_1
+#         report_timing_summary -file $timing_rpt
+#         report_utilization -file $util_rpt
+# 
+#         set setup_paths [get_timing_paths -setup -max_paths 1]
+#         set hold_paths [get_timing_paths -hold -max_paths 1]
+# 
+#         if {[llength $setup_paths] > 0} {
+#             set wns [get_property SLACK [lindex $setup_paths 0]]
+#         }
+#         if {[llength $hold_paths] > 0} {
+#             set whs [get_property SLACK [lindex $hold_paths 0]]
+#         }
+# 
+#         set denom [expr {$period - double($wns)}]
+#         if {$denom > 0.0} {
+#             set fmax_est [expr {1000.0 / $denom}]
+#         }
+# 
+#         if {$wns >= 0.0 && $whs >= 0.0} {
+#             set status "PASS"
+#         }
+#     } msg]} {
+#         set run_status "ERROR: $msg"
+#         puts "RUN_ERROR ${freq}MHz: $msg"
+#     }
+# 
+#     puts [format "RESULT freq=%sMHz status=%s WNS=%.3fns WHS=%.3fns Fmax_est=%.3fMHz run_status=%s" \
+#         $freq $status $wns $whs $fmax_est $run_status]
+#     puts $csv [format "%s,%.6f,%s,%.6f,%.6f,%.6f,%s,%s" \
+#         $freq $period $status $wns $whs $fmax_est $run_status $timing_rpt]
+#     flush $csv
+# 
+#     catch {close_project}
+# 
+#     if {$status eq "PASS" && $first_pass eq ""} {
+#         set first_pass $freq
+#         break
+#     }
+# }
+
+=== FMAX_SWEEP: 145 MHz period=6.896551724137931 ns ===
+create_project: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 567.387 ; gain = 182.816
+WARNING: [Vivado 12-7122] Auto Incremental Compile:: No reference checkpoint was found in run synth_1. Auto-incremental flow will not be run, the standard flow will be run instead.
+[Sun May 24 19:47:55 2026] Launched synth_1...
+Run output will be captured here: E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/synth_1/runme.log
+[Sun May 24 19:47:55 2026] Waiting for synth_1 to finish...
+
+
+*** Running vivado
+    with args -log top_convolution.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source top_convolution.tcl
+
+
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source top_convolution.tcl -notrace
+create_project: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 567.273 ; gain = 182.625
+Command: synth_design -top top_convolution -part xc7a100tcsg324-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 6176
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 1415.520 ; gain = 439.371
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'top_convolution' [E:/PROJECTS/convolution_fpga/src/top_convolution.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'line_buffer_4' [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:3]
+	Parameter IMAGE_WIDTH bound to: 32'sb00000000000000000000011110000000 
+	Parameter DATA_W bound to: 32'sb00000000000000000000000000011000 
+	Parameter KSIZE bound to: 32'sb00000000000000000000000000000101 
+INFO: [Synth 8-6155] done synthesizing module 'line_buffer_4' (0#1) [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'kernel_loader' [E:/PROJECTS/convolution_fpga/src/kernel_loader.sv:3]
+	Parameter COEFF_W bound to: 32'sb00000000000000000000000000010000 
+	Parameter KSIZE bound to: 32'sb00000000000000000000000000000101 
+	Parameter KERNEL_Q bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'kernel_loader' (0#1) [E:/PROJECTS/convolution_fpga/src/kernel_loader.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'mac_array_25x3' [E:/PROJECTS/convolution_fpga/src/mac_array_25x3.sv:3]
+	Parameter DATA_W bound to: 32'sb00000000000000000000000000011000 
+	Parameter COEFF_W bound to: 32'sb00000000000000000000000000010000 
+	Parameter KSIZE bound to: 32'sb00000000000000000000000000000101 
+	Parameter KERNEL_Q bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'mac_array_25x3' (0#1) [E:/PROJECTS/convolution_fpga/src/mac_array_25x3.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'top_convolution' (0#1) [E:/PROJECTS/convolution_fpga/src/top_convolution.sv:3]
+WARNING: [Synth 8-6014] Unused sequential element p0_reg was removed.  [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:51]
+WARNING: [Synth 8-6014] Unused sequential element p1_reg was removed.  [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:52]
+WARNING: [Synth 8-6014] Unused sequential element p2_reg was removed.  [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:53]
+WARNING: [Synth 8-6014] Unused sequential element p3_reg was removed.  [E:/PROJECTS/convolution_fpga/src/line_buffer_4.sv:54]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 1537.516 ; gain = 561.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 1537.516 ; gain = 561.367
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 1537.516 ; gain = 561.367
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.056 . Memory (MB): peak = 1537.516 ; gain = 0.000
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc]
+WARNING: [Vivado 12-2489] -period contains time 6.896552 which will be rounded to 6.897 to ensure it is an integer multiple of 1 picosecond [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc:1]
+Finished Parsing XDC File [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 1627.812 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+The system cannot find the path specified.
+Constraint Validation Runtime : Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.047 . Memory (MB): peak = 1627.812 ; gain = 0.000
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:15 ; elapsed = 00:00:16 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   16 Bit       Adders := 1     
++---Registers : 
+	               48 Bit    Registers := 15    
+	               24 Bit    Registers := 26    
+	               16 Bit    Registers := 25    
+	                1 Bit    Registers := 7     
++---RAMs : 
+	              45K Bit	(1920 X 24 bit)          RAMs := 4     
++---Muxes : 
+	   2 Input   24 Bit        Muxes := 3     
+	   2 Input   16 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 26    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[24], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_r_q_reg[24] is absorbed into DSP u_mac_array/mul_r_q_reg[24].
+DSP Report: register u_kernel_loader/coeff_mem_reg[24] is absorbed into DSP u_mac_array/mul_r_q_reg[24].
+DSP Report: register u_mac_array/mul_r_q_reg[24] is absorbed into DSP u_mac_array/mul_r_q_reg[24].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[24].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[22] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[22] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[7], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[7] is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: register u_mac_array/sub_r_q_reg[7] is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: register u_kernel_loader/coeff_mem_reg[23] is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: register u_mac_array/sub_r_q_reg[7] is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: register u_mac_array/mul_r_q_reg[23] is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[7].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[21], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[21] is absorbed into DSP u_mac_array/mul_r_q_reg[21].
+DSP Report: register u_mac_array/mul_r_q_reg[21] is absorbed into DSP u_mac_array/mul_r_q_reg[21].
+DSP Report: register u_kernel_loader/coeff_mem_reg[21] is absorbed into DSP u_mac_array/mul_r_q_reg[21].
+DSP Report: register u_mac_array/mul_r_q_reg[21] is absorbed into DSP u_mac_array/mul_r_q_reg[21].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[21].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B2)'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[19] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[19] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[6], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[6] is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: register u_mac_array/sub_r_q_reg[6] is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[20] is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: register u_mac_array/sub_r_q_reg[6] is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: register u_mac_array/mul_r_q_reg[20] is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[6].
+DSP Report: Generating DSP u_mac_array/grp_r_q_reg[3], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_r_q_reg[3] is absorbed into DSP u_mac_array/grp_r_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_r_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[18], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[18] is absorbed into DSP u_mac_array/mul_r_q_reg[18].
+DSP Report: register u_mac_array/mul_r_q_reg[18] is absorbed into DSP u_mac_array/mul_r_q_reg[18].
+DSP Report: register u_kernel_loader/coeff_mem_reg[18] is absorbed into DSP u_mac_array/mul_r_q_reg[18].
+DSP Report: register u_mac_array/mul_r_q_reg[18] is absorbed into DSP u_mac_array/mul_r_q_reg[18].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[18].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[16] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[16] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[5], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[5] is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: register u_mac_array/sub_r_q_reg[5] is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: register u_kernel_loader/coeff_mem_reg[17] is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: register u_mac_array/sub_r_q_reg[5] is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: register u_mac_array/mul_r_q_reg[17] is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[5].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[15], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[15] is absorbed into DSP u_mac_array/mul_r_q_reg[15].
+DSP Report: register u_mac_array/mul_r_q_reg[15] is absorbed into DSP u_mac_array/mul_r_q_reg[15].
+DSP Report: register u_kernel_loader/coeff_mem_reg[15] is absorbed into DSP u_mac_array/mul_r_q_reg[15].
+DSP Report: register u_mac_array/mul_r_q_reg[15] is absorbed into DSP u_mac_array/mul_r_q_reg[15].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[15].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[13] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[13] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[4], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_r_q_reg[4] is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: register u_kernel_loader/coeff_mem_reg[14] is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: register u_mac_array/sub_r_q_reg[4] is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: register u_mac_array/mul_r_q_reg[14] is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[4].
+DSP Report: Generating DSP u_mac_array/grp_r_q_reg[2], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_r_q_reg[2] is absorbed into DSP u_mac_array/grp_r_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_r_q_reg[2].
+DSP Report: Generating DSP u_mac_array/half_r_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_r_q_reg[1] is absorbed into DSP u_mac_array/half_r_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_r_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[12], operation Mode is: (A*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[12] is absorbed into DSP u_mac_array/mul_r_q_reg[12].
+DSP Report: register u_mac_array/mul_r_q_reg[12] is absorbed into DSP u_mac_array/mul_r_q_reg[12].
+DSP Report: register u_mac_array/mul_r_q_reg[12] is absorbed into DSP u_mac_array/mul_r_q_reg[12].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[12].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[10] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[10] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[3], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[3] is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: register u_mac_array/sub_r_q_reg[3] is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: register u_kernel_loader/coeff_mem_reg[11] is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: register u_mac_array/sub_r_q_reg[3] is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: register u_mac_array/mul_r_q_reg[11] is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[9], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_r_q_reg[9] is absorbed into DSP u_mac_array/mul_r_q_reg[9].
+DSP Report: register u_kernel_loader/coeff_mem_reg[9] is absorbed into DSP u_mac_array/mul_r_q_reg[9].
+DSP Report: register u_mac_array/mul_r_q_reg[9] is absorbed into DSP u_mac_array/mul_r_q_reg[9].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[9].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[7] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[7] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[2], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[2] is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: register u_mac_array/sub_r_q_reg[2] is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[8] is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: register u_mac_array/sub_r_q_reg[2] is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: register u_mac_array/mul_r_q_reg[8] is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[2].
+DSP Report: Generating DSP u_mac_array/grp_r_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_r_q_reg[1] is absorbed into DSP u_mac_array/grp_r_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_r_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[6], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[6] is absorbed into DSP u_mac_array/mul_r_q_reg[6].
+DSP Report: register u_mac_array/mul_r_q_reg[6] is absorbed into DSP u_mac_array/mul_r_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[6] is absorbed into DSP u_mac_array/mul_r_q_reg[6].
+DSP Report: register u_mac_array/mul_r_q_reg[6] is absorbed into DSP u_mac_array/mul_r_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[6].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B)'.
+DSP Report: register u_kernel_loader/coeff_mem_reg[4] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[4] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[1], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_r_q_reg[1] is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: register u_mac_array/sub_r_q_reg[1] is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: register u_kernel_loader/coeff_mem_reg[5] is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: register u_mac_array/sub_r_q_reg[1] is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: register u_mac_array/mul_r_q_reg[5] is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_r_q_reg[2], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_r_q_reg[2] is absorbed into DSP u_mac_array/mul_r_q_reg[2].
+DSP Report: register u_mac_array/mul_r_q_reg[2] is absorbed into DSP u_mac_array/mul_r_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[2] is absorbed into DSP u_mac_array/mul_r_q_reg[2].
+DSP Report: register u_mac_array/mul_r_q_reg[2] is absorbed into DSP u_mac_array/mul_r_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_r_q_reg[2].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[0] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[0] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[1] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_r_q_reg[1] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_r_q_reg[0], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_r_q_reg[0] is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: register u_kernel_loader/coeff_mem_reg[3] is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: register u_mac_array/sub_r_q_reg[0] is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: register u_mac_array/mul_r_q_reg[3] is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_r_q_reg[0].
+DSP Report: Generating DSP u_mac_array/grp_r_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_r_q_reg[0] is absorbed into DSP u_mac_array/grp_r_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_r_q_reg[0].
+DSP Report: Generating DSP u_mac_array/half_r_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_r_q_reg[0] is absorbed into DSP u_mac_array/half_r_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_r_q_reg[0].
+DSP Report: Generating DSP u_mac_array/nr_q1, operation Mode is: PCIN+A:B.
+DSP Report: operator u_mac_array/nr_q1 is absorbed into DSP u_mac_array/nr_q1.
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[24], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_g_q_reg[24] is absorbed into DSP u_mac_array/mul_g_q_reg[24].
+DSP Report: register u_kernel_loader/coeff_mem_reg[24] is absorbed into DSP u_mac_array/mul_g_q_reg[24].
+DSP Report: register u_mac_array/mul_g_q_reg[24] is absorbed into DSP u_mac_array/mul_g_q_reg[24].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[24].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[22] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[22] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[7], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[7] is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: register u_mac_array/sub_g_q_reg[7] is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: register u_kernel_loader/coeff_mem_reg[23] is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: register u_mac_array/sub_g_q_reg[7] is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: register u_mac_array/mul_g_q_reg[23] is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[7].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[21], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[21] is absorbed into DSP u_mac_array/mul_g_q_reg[21].
+DSP Report: register u_mac_array/mul_g_q_reg[21] is absorbed into DSP u_mac_array/mul_g_q_reg[21].
+DSP Report: register u_kernel_loader/coeff_mem_reg[21] is absorbed into DSP u_mac_array/mul_g_q_reg[21].
+DSP Report: register u_mac_array/mul_g_q_reg[21] is absorbed into DSP u_mac_array/mul_g_q_reg[21].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[21].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B2)'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[19] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[19] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[6], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[6] is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: register u_mac_array/sub_g_q_reg[6] is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[20] is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: register u_mac_array/sub_g_q_reg[6] is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: register u_mac_array/mul_g_q_reg[20] is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[6].
+DSP Report: Generating DSP u_mac_array/grp_g_q_reg[3], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_g_q_reg[3] is absorbed into DSP u_mac_array/grp_g_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_g_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[18], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[18] is absorbed into DSP u_mac_array/mul_g_q_reg[18].
+DSP Report: register u_mac_array/mul_g_q_reg[18] is absorbed into DSP u_mac_array/mul_g_q_reg[18].
+DSP Report: register u_kernel_loader/coeff_mem_reg[18] is absorbed into DSP u_mac_array/mul_g_q_reg[18].
+DSP Report: register u_mac_array/mul_g_q_reg[18] is absorbed into DSP u_mac_array/mul_g_q_reg[18].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[18].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[16] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[16] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[5], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[5] is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: register u_mac_array/sub_g_q_reg[5] is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: register u_kernel_loader/coeff_mem_reg[17] is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: register u_mac_array/sub_g_q_reg[5] is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: register u_mac_array/mul_g_q_reg[17] is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[5].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[15], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[15] is absorbed into DSP u_mac_array/mul_g_q_reg[15].
+DSP Report: register u_mac_array/mul_g_q_reg[15] is absorbed into DSP u_mac_array/mul_g_q_reg[15].
+DSP Report: register u_kernel_loader/coeff_mem_reg[15] is absorbed into DSP u_mac_array/mul_g_q_reg[15].
+DSP Report: register u_mac_array/mul_g_q_reg[15] is absorbed into DSP u_mac_array/mul_g_q_reg[15].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[15].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[13] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[13] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[4], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_g_q_reg[4] is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: register u_kernel_loader/coeff_mem_reg[14] is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: register u_mac_array/sub_g_q_reg[4] is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: register u_mac_array/mul_g_q_reg[14] is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[4].
+DSP Report: Generating DSP u_mac_array/grp_g_q_reg[2], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_g_q_reg[2] is absorbed into DSP u_mac_array/grp_g_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_g_q_reg[2].
+DSP Report: Generating DSP u_mac_array/half_g_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_g_q_reg[1] is absorbed into DSP u_mac_array/half_g_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_g_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[12], operation Mode is: (A*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[12] is absorbed into DSP u_mac_array/mul_g_q_reg[12].
+DSP Report: register u_mac_array/mul_g_q_reg[12] is absorbed into DSP u_mac_array/mul_g_q_reg[12].
+DSP Report: register u_mac_array/mul_g_q_reg[12] is absorbed into DSP u_mac_array/mul_g_q_reg[12].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[12].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[10] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[10] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[3], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[3] is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: register u_mac_array/sub_g_q_reg[3] is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: register u_kernel_loader/coeff_mem_reg[11] is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: register u_mac_array/sub_g_q_reg[3] is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: register u_mac_array/mul_g_q_reg[11] is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[9], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_g_q_reg[9] is absorbed into DSP u_mac_array/mul_g_q_reg[9].
+DSP Report: register u_kernel_loader/coeff_mem_reg[9] is absorbed into DSP u_mac_array/mul_g_q_reg[9].
+DSP Report: register u_mac_array/mul_g_q_reg[9] is absorbed into DSP u_mac_array/mul_g_q_reg[9].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[9].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[7] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[7] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[2], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[2] is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: register u_mac_array/sub_g_q_reg[2] is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[8] is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: register u_mac_array/sub_g_q_reg[2] is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: register u_mac_array/mul_g_q_reg[8] is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[2].
+DSP Report: Generating DSP u_mac_array/grp_g_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_g_q_reg[1] is absorbed into DSP u_mac_array/grp_g_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_g_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[6], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[6] is absorbed into DSP u_mac_array/mul_g_q_reg[6].
+DSP Report: register u_mac_array/mul_g_q_reg[6] is absorbed into DSP u_mac_array/mul_g_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[6] is absorbed into DSP u_mac_array/mul_g_q_reg[6].
+DSP Report: register u_mac_array/mul_g_q_reg[6] is absorbed into DSP u_mac_array/mul_g_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[6].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B)'.
+DSP Report: register u_kernel_loader/coeff_mem_reg[4] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[4] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[1], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_g_q_reg[1] is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: register u_mac_array/sub_g_q_reg[1] is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: register u_kernel_loader/coeff_mem_reg[5] is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: register u_mac_array/sub_g_q_reg[1] is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: register u_mac_array/mul_g_q_reg[5] is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_g_q_reg[2], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_g_q_reg[2] is absorbed into DSP u_mac_array/mul_g_q_reg[2].
+DSP Report: register u_mac_array/mul_g_q_reg[2] is absorbed into DSP u_mac_array/mul_g_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[2] is absorbed into DSP u_mac_array/mul_g_q_reg[2].
+DSP Report: register u_mac_array/mul_g_q_reg[2] is absorbed into DSP u_mac_array/mul_g_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_g_q_reg[2].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[0] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[0] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[1] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_g_q_reg[1] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_g_q_reg[0], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_g_q_reg[0] is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: register u_kernel_loader/coeff_mem_reg[3] is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: register u_mac_array/sub_g_q_reg[0] is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: register u_mac_array/mul_g_q_reg[3] is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_g_q_reg[0].
+DSP Report: Generating DSP u_mac_array/grp_g_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_g_q_reg[0] is absorbed into DSP u_mac_array/grp_g_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_g_q_reg[0].
+DSP Report: Generating DSP u_mac_array/half_g_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_g_q_reg[0] is absorbed into DSP u_mac_array/half_g_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_g_q_reg[0].
+DSP Report: Generating DSP u_mac_array/ng_q1, operation Mode is: PCIN+A:B.
+DSP Report: operator u_mac_array/ng_q1 is absorbed into DSP u_mac_array/ng_q1.
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[24], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_b_q_reg[24] is absorbed into DSP u_mac_array/mul_b_q_reg[24].
+DSP Report: register u_kernel_loader/coeff_mem_reg[24] is absorbed into DSP u_mac_array/mul_b_q_reg[24].
+DSP Report: register u_mac_array/mul_b_q_reg[24] is absorbed into DSP u_mac_array/mul_b_q_reg[24].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[24].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[22] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[22] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[7], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[7] is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: register u_mac_array/sub_b_q_reg[7] is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: register u_kernel_loader/coeff_mem_reg[23] is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: register u_mac_array/sub_b_q_reg[7] is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: register u_mac_array/mul_b_q_reg[23] is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[7].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[21], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[21] is absorbed into DSP u_mac_array/mul_b_q_reg[21].
+DSP Report: register u_mac_array/mul_b_q_reg[21] is absorbed into DSP u_mac_array/mul_b_q_reg[21].
+DSP Report: register u_kernel_loader/coeff_mem_reg[21] is absorbed into DSP u_mac_array/mul_b_q_reg[21].
+DSP Report: register u_mac_array/mul_b_q_reg[21] is absorbed into DSP u_mac_array/mul_b_q_reg[21].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[21].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B2)'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[19] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[19] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[6], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[6] is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: register u_mac_array/sub_b_q_reg[6] is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[20] is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: register u_mac_array/sub_b_q_reg[6] is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: register u_mac_array/mul_b_q_reg[20] is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[6].
+DSP Report: Generating DSP u_mac_array/grp_b_q_reg[3], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_b_q_reg[3] is absorbed into DSP u_mac_array/grp_b_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_b_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[18], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[18] is absorbed into DSP u_mac_array/mul_b_q_reg[18].
+DSP Report: register u_mac_array/mul_b_q_reg[18] is absorbed into DSP u_mac_array/mul_b_q_reg[18].
+DSP Report: register u_kernel_loader/coeff_mem_reg[18] is absorbed into DSP u_mac_array/mul_b_q_reg[18].
+DSP Report: register u_mac_array/mul_b_q_reg[18] is absorbed into DSP u_mac_array/mul_b_q_reg[18].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[18].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[16] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[16] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[5], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[5] is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: register u_mac_array/sub_b_q_reg[5] is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: register u_kernel_loader/coeff_mem_reg[17] is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: register u_mac_array/sub_b_q_reg[5] is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: register u_mac_array/mul_b_q_reg[17] is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[5].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[15], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[15] is absorbed into DSP u_mac_array/mul_b_q_reg[15].
+DSP Report: register u_mac_array/mul_b_q_reg[15] is absorbed into DSP u_mac_array/mul_b_q_reg[15].
+DSP Report: register u_kernel_loader/coeff_mem_reg[15] is absorbed into DSP u_mac_array/mul_b_q_reg[15].
+DSP Report: register u_mac_array/mul_b_q_reg[15] is absorbed into DSP u_mac_array/mul_b_q_reg[15].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[15].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[13] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[13] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[4], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_b_q_reg[4] is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: register u_kernel_loader/coeff_mem_reg[14] is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: register u_mac_array/sub_b_q_reg[4] is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: register u_mac_array/mul_b_q_reg[14] is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[4].
+DSP Report: Generating DSP u_mac_array/grp_b_q_reg[2], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_b_q_reg[2] is absorbed into DSP u_mac_array/grp_b_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_b_q_reg[2].
+DSP Report: Generating DSP u_mac_array/half_b_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_b_q_reg[1] is absorbed into DSP u_mac_array/half_b_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_b_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[12], operation Mode is: (A*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[12] is absorbed into DSP u_mac_array/mul_b_q_reg[12].
+DSP Report: register u_mac_array/mul_b_q_reg[12] is absorbed into DSP u_mac_array/mul_b_q_reg[12].
+DSP Report: register u_mac_array/mul_b_q_reg[12] is absorbed into DSP u_mac_array/mul_b_q_reg[12].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[12].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[10] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[10] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[3], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[3] is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: register u_mac_array/sub_b_q_reg[3] is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: register u_kernel_loader/coeff_mem_reg[11] is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: register u_mac_array/sub_b_q_reg[3] is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: register u_mac_array/mul_b_q_reg[11] is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[3].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[9], operation Mode is: (A2*B2)'.
+DSP Report: register u_mac_array/mul_b_q_reg[9] is absorbed into DSP u_mac_array/mul_b_q_reg[9].
+DSP Report: register u_kernel_loader/coeff_mem_reg[9] is absorbed into DSP u_mac_array/mul_b_q_reg[9].
+DSP Report: register u_mac_array/mul_b_q_reg[9] is absorbed into DSP u_mac_array/mul_b_q_reg[9].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[9].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[7] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[7] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[2], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[2] is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: register u_mac_array/sub_b_q_reg[2] is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[8] is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: register u_mac_array/sub_b_q_reg[2] is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: register u_mac_array/mul_b_q_reg[8] is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[2].
+DSP Report: Generating DSP u_mac_array/grp_b_q_reg[1], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_b_q_reg[1] is absorbed into DSP u_mac_array/grp_b_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_b_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[6], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[6] is absorbed into DSP u_mac_array/mul_b_q_reg[6].
+DSP Report: register u_mac_array/mul_b_q_reg[6] is absorbed into DSP u_mac_array/mul_b_q_reg[6].
+DSP Report: register u_kernel_loader/coeff_mem_reg[6] is absorbed into DSP u_mac_array/mul_b_q_reg[6].
+DSP Report: register u_mac_array/mul_b_q_reg[6] is absorbed into DSP u_mac_array/mul_b_q_reg[6].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[6].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B)'.
+DSP Report: register u_kernel_loader/coeff_mem_reg[4] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[4] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[1], operation Mode is: (PCIN+(A2*B'')')'.
+DSP Report: register u_mac_array/sub_b_q_reg[1] is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: register u_mac_array/sub_b_q_reg[1] is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: register u_kernel_loader/coeff_mem_reg[5] is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: register u_mac_array/sub_b_q_reg[1] is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: register u_mac_array/mul_b_q_reg[5] is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[1].
+DSP Report: Generating DSP u_mac_array/mul_b_q_reg[2], operation Mode is: (A2*B'')'.
+DSP Report: register u_mac_array/mul_b_q_reg[2] is absorbed into DSP u_mac_array/mul_b_q_reg[2].
+DSP Report: register u_mac_array/mul_b_q_reg[2] is absorbed into DSP u_mac_array/mul_b_q_reg[2].
+DSP Report: register u_kernel_loader/coeff_mem_reg[2] is absorbed into DSP u_mac_array/mul_b_q_reg[2].
+DSP Report: register u_mac_array/mul_b_q_reg[2] is absorbed into DSP u_mac_array/mul_b_q_reg[2].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/mul_b_q_reg[2].
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[0] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[0] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP p_1_out, operation Mode is: PCIN+(A2*B'')'.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register p_1_out is absorbed into DSP p_1_out.
+DSP Report: register u_kernel_loader/coeff_mem_reg[1] is absorbed into DSP p_1_out.
+DSP Report: register u_mac_array/mul_b_q_reg[1] is absorbed into DSP p_1_out.
+DSP Report: operator p_0_out is absorbed into DSP p_1_out.
+DSP Report: operator p_1_out is absorbed into DSP p_1_out.
+DSP Report: Generating DSP u_mac_array/sub_b_q_reg[0], operation Mode is: (PCIN+(A2*B2)')'.
+DSP Report: register u_mac_array/sub_b_q_reg[0] is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: register u_kernel_loader/coeff_mem_reg[3] is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: register u_mac_array/sub_b_q_reg[0] is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: register u_mac_array/mul_b_q_reg[3] is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: operator p_1_out is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/sub_b_q_reg[0].
+DSP Report: Generating DSP u_mac_array/grp_b_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/grp_b_q_reg[0] is absorbed into DSP u_mac_array/grp_b_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/grp_b_q_reg[0].
+DSP Report: Generating DSP u_mac_array/half_b_q_reg[0], operation Mode is: (PCIN+A:B)'.
+DSP Report: register u_mac_array/half_b_q_reg[0] is absorbed into DSP u_mac_array/half_b_q_reg[0].
+DSP Report: operator p_0_out is absorbed into DSP u_mac_array/half_b_q_reg[0].
+DSP Report: Generating DSP u_mac_array/nb_q1, operation Mode is: PCIN+A:B.
+DSP Report: operator u_mac_array/nb_q1 is absorbed into DSP u_mac_array/nb_q1.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+ Sort Area is  u_mac_array/mul_b_q_reg[2]_1b : 0 0 : 1013 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[2]_1b : 0 1 : 1158 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[2]_1b : 0 2 : 1181 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[2]_1b : 0 3 : 1220 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[2]_13 : 0 0 : 1013 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[2]_13 : 0 1 : 1158 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[2]_13 : 0 2 : 1181 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[2]_13 : 0 3 : 1220 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[2]_0 : 0 0 : 1013 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[2]_0 : 0 1 : 1158 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[2]_0 : 0 2 : 1181 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[2]_0 : 0 3 : 1220 4572 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 0 : 1004 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 1 : 1158 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 2 : 1229 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 3 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 4 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[24]_22 : 0 5 : 143 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 0 : 1004 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 1 : 1158 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 2 : 1229 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 3 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 4 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[24]_1a : 0 5 : 143 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 0 : 1004 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 1 : 1158 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 2 : 1229 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 3 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 4 : 191 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[24]_11 : 0 5 : 143 3916 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[12]_1e : 0 0 : 997 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[12]_1e : 0 1 : 1158 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[12]_1e : 0 2 : 1229 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[12]_1e : 0 3 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[12]_1e : 0 4 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[12]_16 : 0 0 : 997 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[12]_16 : 0 1 : 1158 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[12]_16 : 0 2 : 1229 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[12]_16 : 0 3 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[12]_16 : 0 4 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[12]_b : 0 0 : 997 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[12]_b : 0 1 : 1158 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[12]_b : 0 2 : 1229 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[12]_b : 0 3 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[12]_b : 0 4 : 191 3766 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[18]_20 : 0 0 : 1013 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[18]_20 : 0 1 : 1158 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[18]_20 : 0 2 : 1229 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[18]_20 : 0 3 : 191 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[18]_18 : 0 0 : 1013 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[18]_18 : 0 1 : 1158 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[18]_18 : 0 2 : 1229 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[18]_18 : 0 3 : 191 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[18]_e : 0 0 : 1013 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[18]_e : 0 1 : 1158 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[18]_e : 0 2 : 1229 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[18]_e : 0 3 : 191 3591 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[6]_1c : 0 0 : 1013 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[6]_1c : 0 1 : 1140 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[6]_1c : 0 2 : 1229 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[6]_1c : 0 3 : 191 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[6]_14 : 0 0 : 1013 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[6]_14 : 0 1 : 1140 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[6]_14 : 0 2 : 1229 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[6]_14 : 0 3 : 191 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[6]_5 : 0 0 : 1013 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[6]_5 : 0 1 : 1140 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[6]_5 : 0 2 : 1229 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[6]_5 : 0 3 : 191 3573 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[15]_1f : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[15]_1f : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[15]_1f : 0 2 : 1220 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[21]_21 : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[21]_21 : 0 1 : 1149 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[21]_21 : 0 2 : 1229 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[9]_1d : 0 0 : 1004 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[9]_1d : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_b_q_reg[9]_1d : 0 2 : 1229 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[15]_17 : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[15]_17 : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[15]_17 : 0 2 : 1220 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[21]_19 : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[21]_19 : 0 1 : 1149 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[21]_19 : 0 2 : 1229 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[9]_15 : 0 0 : 1004 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[9]_15 : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_g_q_reg[9]_15 : 0 2 : 1229 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[15]_d : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[15]_d : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[15]_d : 0 2 : 1220 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[21]_f : 0 0 : 1013 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[21]_f : 0 1 : 1149 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[21]_f : 0 2 : 1229 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[9]_9 : 0 0 : 1004 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[9]_9 : 0 1 : 1158 3391 : Used 1 time 0
+ Sort Area is  u_mac_array/mul_r_q_reg[9]_9 : 0 2 : 1229 3391 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Preliminary Mapping Report (see note below)
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|Module Name     | RTL Object              | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | 
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|top_convolution | u_line_buffer/line3_reg | 1 K x 24(READ_FIRST)   | W | R |                        |   |   | Port A           | 1      | 1      | 
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+
+Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
+
+Distributed RAM: Preliminary Mapping Report (see note below)
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+|Module Name     | RTL Object              | Inference | Size (Depth x Width) | Primitives                      | 
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+|top_convolution | u_line_buffer/line0_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
+|top_convolution | u_line_buffer/line1_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
+|top_convolution | u_line_buffer/line2_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+
+Note: The table above is a preliminary report that shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once.
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name     | DSP Mapping       | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B2)'     | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 16     | 9      | -      | -      | 25     | 0    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B)'      | 16     | 9      | -      | -      | 48     | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | PCIN+A:B          | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B2)'     | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 16     | 9      | -      | -      | 25     | 0    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B)'      | 16     | 9      | -      | -      | 48     | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | PCIN+A:B          | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B2)'     | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 16     | 9      | -      | -      | 25     | 0    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B2)'          | 16     | 9      | -      | -      | 25     | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B)'      | 16     | 9      | -      | -      | 48     | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B'')')' | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A2*B'')'         | 16     | 9      | -      | -      | 25     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A2*B'')'    | 16     | 9      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (PCIN+(A2*B2)')'  | 16     | 9      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | PCIN+A:B          | 30     | 18     | -      | -      | -1     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:27 ; elapsed = 00:00:28 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Final Mapping Report
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|Module Name     | RTL Object              | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | 
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|top_convolution | u_line_buffer/line3_reg | 1 K x 24(READ_FIRST)   | W | R |                        |   |   | Port A           | 1      | 1      | 
++----------------+-------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+
+
+Distributed RAM: Final Mapping Report
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+|Module Name     | RTL Object              | Inference | Size (Depth x Width) | Primitives                      | 
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+|top_convolution | u_line_buffer/line0_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
+|top_convolution | u_line_buffer/line1_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
+|top_convolution | u_line_buffer/line2_reg | Implied   | 2 K x 24             | RAM128X1S x 24 RAM256X1S x 168  | 
++----------------+-------------------------+-----------+----------------------+---------------------------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance u_line_buffer/line3_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_line_buffer/line3_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:28 ; elapsed = 00:00:29 . Memory (MB): peak = 1627.812 ; gain = 651.664
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 1632.910 ; gain = 656.762
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 1632.910 ; gain = 656.762
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 1632.910 ; gain = 656.762
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 1632.910 ; gain = 656.762
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 1635.895 ; gain = 659.746
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 1635.895 ; gain = 659.746
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name     | DSP Mapping       | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B')'     | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B)'      | 30     | 8      | -      | -      | 0      | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B')'     | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B)'      | 30     | 8      | -      | -      | 0      | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B')'     | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B)'      | 30     | 8      | -      | -      | 0      | 1    | 0    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | PCIN+(A'*B'')'    | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 0    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 30     | 8      | -      | -      | 0      | 0    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 30     | 8      | -      | -      | 0      | 0    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A*B'')'          | 30     | 8      | -      | -      | 0      | 0    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B')'          | 30     | 8      | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 48     | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B'')')' | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 1    | 1    | 
+|top_convolution | (A'*B'')'         | 30     | 8      | -      | -      | 0      | 1    | 2    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+(A'*B')')'  | 30     | 8      | -      | -      | 48     | 1    | 1    | -    | -    | -     | 1    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|mac_array_25x3  | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_convolution | (PCIN+A:B)'       | 30     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
++----------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+----------+------+
+|      |Cell      |Count |
++------+----------+------+
+|1     |BUFG      |     1|
+|2     |CARRY4    |    23|
+|3     |DSP48E1   |    96|
+|12    |LUT1      |    27|
+|13    |LUT2      |   150|
+|14    |LUT3      |     4|
+|15    |LUT4      |     9|
+|16    |LUT5      |    21|
+|17    |LUT6      |   249|
+|18    |RAM128X1S |    72|
+|19    |RAM256X1S |   504|
+|20    |RAMB18E1  |     1|
+|21    |RAMB36E1  |     1|
+|22    |FDRE      |   439|
+|23    |FDSE      |     1|
+|24    |IBUF      |    49|
+|25    |OBUF      |    25|
++------+----------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 1635.895 ; gain = 659.746
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 1 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:25 ; elapsed = 00:00:32 . Memory (MB): peak = 1635.895 ; gain = 569.449
+Synthesis Optimization Complete : Time (s): cpu = 00:00:33 ; elapsed = 00:00:35 . Memory (MB): peak = 1635.895 ; gain = 659.746
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.040 . Memory (MB): peak = 1648.004 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 697 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 1655.703 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 576 instances were transformed.
+  RAM128X1S => RAM128X1S (MUXF7, RAMS64E(x2)): 72 instances
+  RAM256X1S => RAM256X1S (MUXF7(x2), MUXF8, RAMS64E(x4)): 504 instances
+
+The system cannot find the path specified.
+Synth Design complete | Checksum: 5c745da3
+INFO: [Common 17-83] Releasing license: Synthesis
+24 Infos, 6 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:38 ; elapsed = 00:00:40 . Memory (MB): peak = 1655.703 ; gain = 1088.430
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.011 . Memory (MB): peak = 1655.703 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/synth_1/top_convolution.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file top_convolution_utilization_synth.rpt -pb top_convolution_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sun May 24 19:48:50 2026...
+[Sun May 24 19:48:55 2026] synth_1 finished
+wait_on_runs: Time (s): cpu = 00:00:00 ; elapsed = 00:01:00 . Memory (MB): peak = 571.371 ; gain = 0.000
+[Sun May 24 19:48:55 2026] Launched impl_1...
+Run output will be captured here: E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/runme.log
+[Sun May 24 19:48:55 2026] Waiting for impl_1 to finish...
+
+
+*** Running vivado
+    with args -log top_convolution.vdi -applog -m64 -product Vivado -messageDb vivado.pb -mode batch -source top_convolution.tcl -notrace
+
+
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source top_convolution.tcl -notrace
+create_project: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 567.664 ; gain = 182.270
+Command: link_design -top top_convolution -part xc7a100tcsg324-1
+Design is defaulting to srcset: sources_1
+Design is defaulting to constrset: constrs_1
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.024 . Memory (MB): peak = 978.645 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 697 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 1 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2023.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc]
+WARNING: [Vivado 12-2489] -period contains time 6.896552 which will be rounded to 6.897 to ensure it is an integer multiple of 1 picosecond [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc:1]
+Finished Parsing XDC File [E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/clock.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 1126.703 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 576 instances were transformed.
+  RAM128X1S => RAM128X1S (MUXF7, RAMS64E(x2)): 72 instances
+  RAM256X1S => RAM256X1S (MUXF7(x2), MUXF8, RAMS64E(x4)): 504 instances
+
+The system cannot find the path specified.
+7 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+link_design completed successfully
+link_design: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 1126.703 ; gain = 559.039
+Command: opt_design -directive ExploreWithRemap
+INFO: [Vivado_Tcl 4-136] Directive used for opt_design is: ExploreWithRemap
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.833 . Memory (MB): peak = 1149.672 ; gain = 22.949
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 1490.758 ; gain = 0.000
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.005 . Memory (MB): peak = 1490.758 ; gain = 0.000
+Phase 1 Initialization | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.006 . Memory (MB): peak = 1490.758 ; gain = 0.000
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Timer Update
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Phase 2.1 Timer Update | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 1998.086 ; gain = 507.328
+
+Phase 2.2 Timing Data Collection
+Phase 2.2 Timing Data Collection | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 1998.086 ; gain = 507.328
+Phase 2 Timer Update And Timing Data Collection | Checksum: 9c83030e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 1998.086 ; gain = 507.328
+
+Phase 3 Retarget
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: c48b831d
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 1998.086 ; gain = 507.328
+Retarget | Checksum: c48b831d
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 0 cells
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: c48b831d
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 1998.086 ; gain = 507.328
+Constant propagation | Checksum: c48b831d
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 5 Sweep
+Phase 5 Sweep | Checksum: a21a139e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 1998.086 ; gain = 507.328
+Sweep | Checksum: a21a139e
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+
+Phase 6 BUFG optimization
+Phase 6 BUFG optimization | Checksum: a21a139e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 1998.086 ; gain = 507.328
+BUFG optimization | Checksum: a21a139e
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: a21a139e
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 1998.086 ; gain = 507.328
+Shift Register Optimization | Checksum: a21a139e
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+INFO: [Opt 31-1555] control_set_opt supports Versal devices only, and device 7a100t is unsupported
+
+Phase 8 Remap
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2295.172 ; gain = 0.000
+Phase 8 Remap | Checksum: f75d4031
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:10 . Memory (MB): peak = 2429.238 ; gain = 938.480
+Remap | Checksum: f75d4031
+INFO: [Opt 31-389] Phase Remap created 9 cells and removed 11 cells
+
+Phase 9 Post Processing Netlist
+Phase 9 Post Processing Netlist | Checksum: 7737d64c
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:10 . Memory (MB): peak = 2429.238 ; gain = 938.480
+Post Processing Netlist | Checksum: 7737d64c
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 10 Finalization
+
+Phase 10.1 Finalizing Design Cores and Updating Shapes
+Phase 10.1 Finalizing Design Cores and Updating Shapes | Checksum: 18942e879
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:11 . Memory (MB): peak = 2429.238 ; gain = 938.480
+
+Phase 10.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2429.238 ; gain = 0.000
+Phase 10.2 Verifying Netlist Connectivity | Checksum: 18942e879
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:11 . Memory (MB): peak = 2429.238 ; gain = 938.480
+Phase 10 Finalization | Checksum: 18942e879
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:11 . Memory (MB): peak = 2429.238 ; gain = 938.480
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |               0  |                                              0  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              0  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Remap                        |               9  |              11  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 18942e879
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:11 . Memory (MB): peak = 2429.238 ; gain = 938.480
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2429.238 ; gain = 0.000
+
+Starting Netlist Obfuscation Task
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2429.238 ; gain = 0.000
+Ending Netlist Obfuscation Task | Checksum: 18942e879
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.003 . Memory (MB): peak = 2429.238 ; gain = 0.000
+INFO: [Common 17-83] Releasing license: Implementation
+28 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:15 ; elapsed = 00:00:14 . Memory (MB): peak = 2429.238 ; gain = 1302.535
+INFO: [runtcl-4] Executing : report_drc -file top_convolution_drc_opted.rpt -pb top_convolution_drc_opted.pb -rpx top_convolution_drc_opted.rpx
+Command: report_drc -file top_convolution_drc_opted.rpt -pb top_convolution_drc_opted.pb -rpx top_convolution_drc_opted.rpx
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'E:/Vivado/2023.2/data/ip'.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_drc_opted.rpt.
+report_drc completed successfully
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.013 . Memory (MB): peak = 2454.891 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_opt.dcp' has been generated.
+Command: place_design -directive Explore
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-83] Releasing license: Implementation
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Place 46-5] The placer was invoked with the 'Explore' directive.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 4 CPUs
+
+Starting Placer Task
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2456.125 ; gain = 0.000
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: a15b05f1
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 2456.125 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2456.125 ; gain = 0.000
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 5ac1c57c
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.715 . Memory (MB): peak = 2489.590 ; gain = 33.465
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: eb3c7c29
+
+Time (s): cpu = 00:00:05 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: eb3c7c29
+
+Time (s): cpu = 00:00:05 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+Phase 1 Placer Initialization | Checksum: eb3c7c29
+
+Time (s): cpu = 00:00:05 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 6c015f94
+
+Time (s): cpu = 00:00:05 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 108ca0df3
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 108ca0df3
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:03 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 2.4 Global Placement Core
+
+Phase 2.4.1 UpdateTiming Before Physical Synthesis
+Phase 2.4.1 UpdateTiming Before Physical Synthesis | Checksum: 6a43be85
+
+Time (s): cpu = 00:00:20 ; elapsed = 00:00:12 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 2.4.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 0 LUTNM shape to break, 50 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 0, two critical 0, total 0, new lutff created 0
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 23 nets or LUTs. Breaked 0 LUT, combined 23 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[1]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 2165 to 582 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 582.
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[2]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 2166 to 583 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 583.
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[3]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 2166 to 583 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 583.
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[4]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 2166 to 583 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 583.
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[5]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 2166 to 583 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 583.
+INFO: [Physopt 32-1132] Very high fanout net 'u_line_buffer/x_count_reg_n_0_[6]' is not considered as a candidate in VHFN optimzation. The fanout considered for this optimization is changed from 3246 to 583 due to a timing constraint that prevent optimization on all of the loads. To force replication, set the FORCE_MAX_FANOUT property on the net to a number less than 583.
+INFO: [Physopt 32-65] No nets found for high-fanout optimization.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-76] Pass 1. Identified 1 candidate net for fanout optimization.
+INFO: [Physopt 32-81] Processed net u_line_buffer/x_count_reg[0]_rep__11_n_0. Replicated 6 times.
+INFO: [Physopt 32-232] Optimized 1 net. Created 6 new instances.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 1 net or cell. Created 6 new cells, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.010 . Memory (MB): peak = 2508.867 ; gain = 0.000
+INFO: [Physopt 32-46] Identified 6 candidate nets for critical-cell optimization.
+INFO: [Physopt 32-571] Net u_kernel_loader/Q[14] was not replicated.
+INFO: [Physopt 32-571] Net u_kernel_loader/Q[5] was not replicated.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-457] Pass 1. Identified 16 candidate cells for DSP register optimization.
+INFO: [Physopt 32-665] Processed cell p_1_out__9. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_g_q_reg[9]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_g_q_reg[18]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell p_1_out__20. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_r_q_reg[18]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/sub_r_q_reg[4]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell p_1_out__2. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_b_q_reg[18]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_b_q_reg[9]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/sub_r_q_reg[2]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/sub_b_q_reg[2]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/mul_r_q_reg[9]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/sub_g_q_reg[2]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell u_mac_array/sub_g_q_reg[4]. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell p_1_out__0. 8 registers were pushed out.
+INFO: [Physopt 32-665] Processed cell p_1_out__18. 8 registers were pushed out.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 16 nets or cells. Created 128 new cells, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.034 . Memory (MB): peak = 2508.867 ; gain = 0.000
+INFO: [Physopt 32-1123] No candidate cells found for Shift Register to Pipeline optimization
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1401] No candidate cells found for Shift Register optimization.
+INFO: [Physopt 32-677] No candidate cells for Shift Register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-526] No candidate cells for BRAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2508.867 ; gain = 0.000
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |            0  |             23  |                    23  |           0  |           1  |  00:00:00  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Fanout                                           |            6  |              0  |                     1  |           0  |           1  |  00:00:00  |
+|  Critical Cell                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  DSP Register                                     |          128  |              0  |                    16  |           0  |           1  |  00:00:02  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |          134  |             23  |                    40  |           0  |          11  |  00:00:02  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.4.2 Physical Synthesis In Placer | Checksum: 11ba46fdb
+
+Time (s): cpu = 00:00:23 ; elapsed = 00:00:15 . Memory (MB): peak = 2508.867 ; gain = 52.742
+Phase 2.4 Global Placement Core | Checksum: 1e9e69733
+
+Time (s): cpu = 00:00:24 ; elapsed = 00:00:15 . Memory (MB): peak = 2508.867 ; gain = 52.742
+Phase 2 Global Placement | Checksum: 1e9e69733
+
+Time (s): cpu = 00:00:24 ; elapsed = 00:00:15 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: fd4a6d08
+
+Time (s): cpu = 00:00:25 ; elapsed = 00:00:16 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 1b0afaf50
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:00:17 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.3 Area Swap Optimization
+Phase 3.3 Area Swap Optimization | Checksum: 159a4dc54
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:00:17 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.4 Pipeline Register Optimization
+Phase 3.4 Pipeline Register Optimization | Checksum: 1d4d7bd9b
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:00:17 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.5 Fast Optimization
+Phase 3.5 Fast Optimization | Checksum: 18c939b95
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:18 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.6 Small Shape Detail Placement
+Phase 3.6 Small Shape Detail Placement | Checksum: 1561cd4bd
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:19 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.7 Re-assign LUT pins
+Phase 3.7 Re-assign LUT pins | Checksum: 2065ac4d0
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:19 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 3.8 Pipeline Register Optimization
+Phase 3.8 Pipeline Register Optimization | Checksum: 1c13918c6
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:19 . Memory (MB): peak = 2508.867 ; gain = 52.742
+Phase 3 Detail Placement | Checksum: 1c13918c6
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:19 . Memory (MB): peak = 2508.867 ; gain = 52.742
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 18bc90576
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 4 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.177 | TNS=-0.298 |
+Phase 1 Physical Synthesis Initialization | Checksum: 21c208eef
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.403 . Memory (MB): peak = 2511.758 ; gain = 0.000
+INFO: [Place 46-56] BUFG insertion identified 0 candidate nets. Inserted BUFG: 0, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 0, Skipped due to Timing Degradation: 0, Skipped due to netlist editing failed: 0.
+Ending Physical Synthesis Task | Checksum: 21c208eef
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.557 . Memory (MB): peak = 2511.758 ; gain = 0.000
+Phase 4.1.1.1 BUFG Insertion | Checksum: 18bc90576
+
+Time (s): cpu = 00:00:35 ; elapsed = 00:00:21 . Memory (MB): peak = 2511.758 ; gain = 55.633
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=0.125. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: 1c6701534
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+Phase 4.1 Post Commit Optimization | Checksum: 1c6701534
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 1c6701534
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|                1x1|                1x1|
+|___________|___________________|___________________|
+|      South|                1x1|                1x1|
+|___________|___________________|___________________|
+|       East|                1x1|                1x1|
+|___________|___________________|___________________|
+|       West|                1x1|                1x1|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 1c6701534
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+Phase 4.3 Placer Reporting | Checksum: 1c6701534
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2511.758 ; gain = 0.000
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 20d2722be
+
+Time (s): cpu = 00:01:03 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+Ending Placer Task | Checksum: 194785663
+
+Time (s): cpu = 00:01:03 ; elapsed = 00:00:47 . Memory (MB): peak = 2511.758 ; gain = 55.633
+105 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:01:05 ; elapsed = 00:00:48 . Memory (MB): peak = 2511.758 ; gain = 56.867
+INFO: [runtcl-4] Executing : report_io -file top_convolution_io_placed.rpt
+report_io: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.058 . Memory (MB): peak = 2511.758 ; gain = 0.000
+INFO: [runtcl-4] Executing : report_utilization -file top_convolution_utilization_placed.rpt -pb top_convolution_utilization_placed.pb
+INFO: [runtcl-4] Executing : report_control_sets -verbose -file top_convolution_control_sets_placed.rpt
+report_control_sets: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.015 . Memory (MB): peak = 2511.758 ; gain = 0.000
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.012 . Memory (MB): peak = 2522.668 ; gain = 6.977
+Wrote PlaceDB: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.353 . Memory (MB): peak = 2522.668 ; gain = 6.008
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2522.668 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.018 . Memory (MB): peak = 2522.668 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.007 . Memory (MB): peak = 2522.668 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.005 . Memory (MB): peak = 2522.668 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.391 . Memory (MB): peak = 2522.668 ; gain = 6.977
+INFO: [Common 17-1381] The checkpoint 'E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_placed.dcp' has been generated.
+Command: phys_opt_design -directive AggressiveExplore
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Vivado_Tcl 4-137] Directive used for phys_opt_design is: AggressiveExplore
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 2531.547 ; gain = 8.879
+INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. Skipping all physical synthesis optimizations.
+INFO: [Vivado_Tcl 4-232] No setup violation found. The netlist was not modified.
+INFO: [Common 17-83] Releasing license: Implementation
+115 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.012 . Memory (MB): peak = 2555.387 ; gain = 5.941
+Wrote PlaceDB: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.358 . Memory (MB): peak = 2555.387 ; gain = 5.902
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2555.387 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.017 . Memory (MB): peak = 2555.387 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.007 . Memory (MB): peak = 2555.387 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.005 . Memory (MB): peak = 2555.387 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.395 . Memory (MB): peak = 2555.387 ; gain = 5.941
+INFO: [Common 17-1381] The checkpoint 'E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_physopt.dcp' has been generated.
+Command: route_design -directive Explore
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a100t'
+Running DRC as a precondition to command route_design
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+
+Starting Routing Task
+INFO: [Route 35-270] Using Router directive 'Explore'.
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 8 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: c5b2420a ConstDB: 0 ShapeSum: cec61459 RouteDB: 0
+Post Restoration Checksum: NetGraph: 2b5bd97e | NumContArr: 8f53d87d | Constraints: c2a8fa9d | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 24001a735
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:24 . Memory (MB): peak = 2706.777 ; gain = 132.133
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 24001a735
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:24 . Memory (MB): peak = 2706.777 ; gain = 132.133
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 24001a735
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:24 . Memory (MB): peak = 2706.777 ; gain = 132.133
+ Number of Nodes with overlaps = 0
+
+Phase 2.3 Update Timing
+Phase 2.3 Update Timing | Checksum: 3223c85d0
+
+Time (s): cpu = 00:00:34 ; elapsed = 00:00:26 . Memory (MB): peak = 2764.352 ; gain = 189.707
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.253  | TNS=0.000  | WHS=-0.190 | THS=-205.456|
+
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 6152
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 6152
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 2b766ae6b
+
+Time (s): cpu = 00:00:36 ; elapsed = 00:00:27 . Memory (MB): peak = 2819.652 ; gain = 245.008
+
+Phase 3 Initial Routing
+
+Phase 3.1 Global Routing
+Phase 3.1 Global Routing | Checksum: 2b766ae6b
+
+Time (s): cpu = 00:00:36 ; elapsed = 00:00:27 . Memory (MB): peak = 2819.652 ; gain = 245.008
+
+Phase 3.2 Initial Net Routing
+Phase 3.2 Initial Net Routing | Checksum: 193c1426a
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:00:32 . Memory (MB): peak = 2935.969 ; gain = 361.324
+Phase 3 Initial Routing | Checksum: 193c1426a
+
+Time (s): cpu = 00:00:49 ; elapsed = 00:00:32 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 4 Rip-up And Reroute
+
+Phase 4.1 Global Iteration 0
+ Number of Nodes with overlaps = 749
+ Number of Nodes with overlaps = 131
+ Number of Nodes with overlaps = 42
+ Number of Nodes with overlaps = 28
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.218 | TNS=-1.634 | WHS=N/A    | THS=N/A    |
+
+Phase 4.1 Global Iteration 0 | Checksum: 2e8407f33
+
+Time (s): cpu = 00:01:03 ; elapsed = 00:00:41 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 4.2 Global Iteration 1
+ Number of Nodes with overlaps = 191
+ Number of Nodes with overlaps = 77
+ Number of Nodes with overlaps = 47
+ Number of Nodes with overlaps = 35
+ Number of Nodes with overlaps = 19
+ Number of Nodes with overlaps = 8
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.176 | TNS=-0.350 | WHS=N/A    | THS=N/A    |
+
+Phase 4.2 Global Iteration 1 | Checksum: 179f9b8e8
+
+Time (s): cpu = 00:01:11 ; elapsed = 00:00:48 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 4.3 Global Iteration 2
+ Number of Nodes with overlaps = 182
+ Number of Nodes with overlaps = 31
+ Number of Nodes with overlaps = 16
+ Number of Nodes with overlaps = 10
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.001  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 4.3 Global Iteration 2 | Checksum: 1c2b74573
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+Phase 4 Rip-up And Reroute | Checksum: 1c2b74573
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 5 Delay and Skew Optimization
+
+Phase 5.1 Delay CleanUp
+Phase 5.1 Delay CleanUp | Checksum: 1c2b74573
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 5.2 Clock Skew Optimization
+Phase 5.2 Clock Skew Optimization | Checksum: 1c2b74573
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+Phase 5 Delay and Skew Optimization | Checksum: 1c2b74573
+
+Time (s): cpu = 00:01:18 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 6 Post Hold Fix
+
+Phase 6.1 Hold Fix Iter
+
+Phase 6.1.1 Update Timing
+Phase 6.1.1 Update Timing | Checksum: 22af05c9d
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.045  | TNS=0.000  | WHS=0.036  | THS=0.000  |
+
+Phase 6.1 Hold Fix Iter | Checksum: 28eb945e1
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+Phase 6 Post Hold Fix | Checksum: 28eb945e1
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 7 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 2.77038 %
+  Global Horizontal Routing Utilization  = 2.43421 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 7 Route finalize | Checksum: 28eb945e1
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 8 Verifying routed nets
+
+ Verification completed successfully
+Phase 8 Verifying routed nets | Checksum: 28eb945e1
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 9 Depositing Routes
+Phase 9 Depositing Routes | Checksum: 2d6b6af28
+
+Time (s): cpu = 00:01:19 ; elapsed = 00:00:54 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Phase 10 Post Router Timing
+INFO: [Route 35-20] Post Routing Timing Summary | WNS=0.049  | TNS=0.000  | WHS=0.035  | THS=0.000  |
+
+Phase 10 Post Router Timing | Checksum: 2d1f792fd
+
+Time (s): cpu = 00:01:24 ; elapsed = 00:00:56 . Memory (MB): peak = 2935.969 ; gain = 361.324
+INFO: [Route 35-61] The design met the timing requirement.
+INFO: [Route 35-16] Router Completed Successfully
+
+Phase 11 Post-Route Event Processing
+Phase 11 Post-Route Event Processing | Checksum: 138796e43
+
+Time (s): cpu = 00:01:24 ; elapsed = 00:00:56 . Memory (MB): peak = 2935.969 ; gain = 361.324
+Ending Routing Task | Checksum: 138796e43
+
+Time (s): cpu = 00:01:24 ; elapsed = 00:00:56 . Memory (MB): peak = 2935.969 ; gain = 361.324
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+132 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:01:26 ; elapsed = 00:00:57 . Memory (MB): peak = 2935.969 ; gain = 380.582
+INFO: [runtcl-4] Executing : report_drc -file top_convolution_drc_routed.rpt -pb top_convolution_drc_routed.pb -rpx top_convolution_drc_routed.rpx
+Command: report_drc -file top_convolution_drc_routed.rpt -pb top_convolution_drc_routed.pb -rpx top_convolution_drc_routed.rpx
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_drc_routed.rpt.
+report_drc completed successfully
+INFO: [runtcl-4] Executing : report_methodology -file top_convolution_methodology_drc_routed.rpt -pb top_convolution_methodology_drc_routed.pb -rpx top_convolution_methodology_drc_routed.rpx
+Command: report_methodology -file top_convolution_methodology_drc_routed.rpt -pb top_convolution_methodology_drc_routed.pb -rpx top_convolution_methodology_drc_routed.rpx
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [DRC 23-133] Running Methodology with 4 threads
+INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_methodology_drc_routed.rpt.
+report_methodology completed successfully
+INFO: [runtcl-4] Executing : report_power -file top_convolution_power_routed.rpt -pb top_convolution_power_summary_routed.pb -rpx top_convolution_power_routed.rpx
+Command: report_power -file top_convolution_power_routed.rpt -pb top_convolution_power_summary_routed.pb -rpx top_convolution_power_routed.rpx
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+142 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+INFO: [runtcl-4] Executing : report_route_status -file top_convolution_route_status.rpt -pb top_convolution_route_status.pb
+INFO: [runtcl-4] Executing : report_timing_summary -max_paths 10 -report_unconstrained -file top_convolution_timing_summary_routed.rpt -pb top_convolution_timing_summary_routed.pb -rpx top_convolution_timing_summary_routed.rpx -warn_on_violation 
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [runtcl-4] Executing : report_incremental_reuse -file top_convolution_incremental_reuse_routed.rpt
+INFO: [Vivado_Tcl 4-1062] Incremental flow is disabled. No incremental reuse Info to report.
+INFO: [runtcl-4] Executing : report_clock_utilization -file top_convolution_clock_utilization_routed.rpt
+INFO: [runtcl-4] Executing : report_bus_skew -warn_on_violation -file top_convolution_bus_skew_routed.rpt -pb top_convolution_bus_skew_routed.pb -rpx top_convolution_bus_skew_routed.rpx
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.012 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Wrote PlaceDB: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.351 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.089 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.007 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.005 . Memory (MB): peak = 2935.969 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.460 . Memory (MB): peak = 2935.969 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/project/fmax_145.runs/impl_1/top_convolution_routed.dcp' has been generated.
+INFO: [Common 17-206] Exiting Vivado at Sun May 24 19:51:31 2026...
+[Sun May 24 19:51:36 2026] impl_1 finished
+wait_on_runs: Time (s): cpu = 00:00:00 ; elapsed = 00:02:41 . Memory (MB): peak = 571.371 ; gain = 0.000
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.026 . Memory (MB): peak = 978.363 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 697 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 1 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2023.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.017 . Memory (MB): peak = 1084.914 ; gain = 0.738
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.005 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.007 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.235 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.117 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Read Physdb Files: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.379 . Memory (MB): peak = 1708.461 ; gain = 0.000
+Restored from archive | CPU: 1.000000 secs | Memory: 0.000000 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.426 . Memory (MB): peak = 1708.461 ; gain = 7.723
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 1708.461 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 576 instances were transformed.
+  RAM128X1S => RAM128X1S (MUXF7, RAMS64E(x2)): 72 instances
+  RAM256X1S => RAM256X1S (MUXF7(x2), MUXF8, RAMS64E(x4)): 504 instances
+
+open_run: Time (s): cpu = 00:00:12 ; elapsed = 00:00:13 . Memory (MB): peak = 1708.461 ; gain = 1137.090
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+RESULT freq=145MHz status=PASS WNS=0.049ns WHS=0.035ns Fmax_est=146.038MHz run_status=route_design Complete!
+# close $csv
+# puts "\nFmax sweep summary: $csv_path"
+
+Fmax sweep summary: E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/fmax_sweep_summary.csv
+# if {$first_pass ne ""} {
+#     puts "First passing requested frequency: ${first_pass} MHz"
+# } else {
+#     puts "No requested frequency passed timing."
+# }
+First passing requested frequency: 145 MHz
+INFO: [Common 17-206] Exiting Vivado at Sun May 24 19:51:51 2026...

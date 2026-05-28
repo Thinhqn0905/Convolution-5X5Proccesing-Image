@@ -1,0 +1,2 @@
+freq_mhz,period_ns,status,wns_ns,whs_ns,fmax_est_mhz,run_status,timing_report
+145,6.896552,PASS,0.049000,0.035000,146.037597,route_design Complete!,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_refine/145MHz/timing_post_route.rpt

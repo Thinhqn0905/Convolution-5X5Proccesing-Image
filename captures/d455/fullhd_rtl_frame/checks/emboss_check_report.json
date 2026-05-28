@@ -1,0 +1,91 @@
+{
+  "kernel_sum": 160,
+  "kernel_coefficients_q8": [
+    [
+      -32,
+      -16,
+      0,
+      16,
+      32
+    ],
+    [
+      -16,
+      0,
+      16,
+      32,
+      16
+    ],
+    [
+      0,
+      16,
+      32,
+      16,
+      0
+    ],
+    [
+      16,
+      32,
+      16,
+      0,
+      -16
+    ],
+    [
+      32,
+      16,
+      0,
+      -16,
+      -32
+    ]
+  ],
+  "rtl_tb_status": "PASS",
+  "golden_compare": "PASS",
+  "mismatch_pixels": 0,
+  "emboss_vs_input_full": {
+    "shape_a": [
+      1080,
+      1920,
+      3
+    ],
+    "shape_b": [
+      1080,
+      1920,
+      3
+    ],
+    "min_delta": -255,
+    "max_delta": 124,
+    "mean_abs_delta": 28.864123746141974,
+    "max_abs_delta": 255,
+    "changed_channels": 6139795,
+    "changed_pixels": 2072775,
+    "psnr_db": 15.554387178323704,
+    "out_min": 0,
+    "out_max": 188,
+    "out_mean": 45.63580166538066,
+    "out_std": 49.57515608378609,
+    "nonzero_pixels": 2060863
+  },
+  "emboss_vs_input_valid_roi": {
+    "shape_a": [
+      1076,
+      1916,
+      3
+    ],
+    "shape_b": [
+      1076,
+      1916,
+      3
+    ],
+    "min_delta": -179,
+    "max_delta": 124,
+    "mean_abs_delta": 28.46556067343935,
+    "max_abs_delta": 179,
+    "changed_channels": 6103880,
+    "changed_pixels": 2060791,
+    "psnr_db": 15.778137478092757,
+    "out_min": 0,
+    "out_max": 188,
+    "out_mean": 45.9010787330586,
+    "out_std": 49.59643109534745,
+    "nonzero_pixels": 2060863
+  }
+}

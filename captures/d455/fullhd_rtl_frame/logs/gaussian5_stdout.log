@@ -1,0 +1,5 @@
+D455 Full HD RTL frame done: kernel=gaussian5
+TB=PASS valid=2061616/2061616
+Golden compare=PASS mismatch_pixels=0
+Processed PNG: E:\PROJECTS\convolution_fpga\captures\d455\fullhd_rtl_frame\gaussian5\processed\frame_000000.png
+Report JSON: E:\PROJECTS\convolution_fpga\captures\d455\fullhd_rtl_frame\gaussian5\fullhd_rtl_gaussian5_report.json

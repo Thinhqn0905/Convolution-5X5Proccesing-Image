@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1f2937"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #111827; }
+      .sub { font: 600 18px Arial, sans-serif; fill: #374151; }
+      .txt { font: 15px Arial, sans-serif; fill: #111827; }
+      .small { font: 13px Arial, sans-serif; fill: #374151; }
+      .box { fill: #ffffff; stroke: #1f2937; stroke-width: 2; rx: 8; }
+      .stage { fill: #eef2ff; stroke: #3730a3; stroke-width: 2; rx: 8; }
+      .reg { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; rx: 8; }
+      .mul { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; rx: 8; }
+      .sum { fill: #f0fdf4; stroke: #15803d; stroke-width: 2; rx: 8; }
+      .sat { fill: #fdf2f8; stroke: #be185d; stroke-width: 2; rx: 8; }
+      .wire { stroke: #1f2937; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .thin { stroke: #6b7280; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#f8fafc"/>
+  <text x="40" y="50" class="title">Processing Element (PE) implied by mac_array_25x3.sv</text>
+  <text x="40" y="78" class="small">There is no explicit module named PE. One PE is one tap: RGB pixel[i] multiplied by coeff[i], producing R/G/B products.</text>
+
+  <text x="70" y="130" class="sub">Single PE / one 5x5 tap</text>
+
+  <rect x="70" y="160" width="210" height="100" class="box"/>A lightweight CNN classifier is used to evaluate whether the FPGA-processed ECG spectrograms preserve discriminative features for arrhythmia classification.
+  <text x="90" y="188" class="txt">window_flat tap i</text>
+  <text x="90" y="214" class="small">px_r = bits [7:0]</text>
+  <text x="90" y="236" class="small">px_g = bits [15:8]</text>
+  <text x="90" y="258" class="small">px_b = bits [23:16]</text>
+
+  <rect x="70" y="315" width="210" height="72" class="box"/>
+  <text x="90" y="345" class="txt">kernel_flat tap i</text>
+  <text x="90" y="370" class="small">coeff[i], signed 16-bit</text>
+
+  <rect x="360" y="145" width="230" height="260" class="mul"/>
+  <text x="385" y="178" class="sub">PE[i]</text>
+  <text x="385" y="213" class="txt">mul_r[i] = px_r * coeff</text>
+  <text x="385" y="249" class="txt">mul_g[i] = px_g * coeff</text>
+  <text x="385" y="285" class="txt">mul_b[i] = px_b * coeff</text>
+  <text x="385" y="330" class="small">8-bit unsigned pixel</text>
+  <text x="385" y="352" class="small">x signed 16-bit coeff</text>
+  <text x="385" y="374" class="small">= signed 32-bit product</text>
+
+  <rect x="670" y="170" width="220" height="210" class="reg"/>
+  <text x="695" y="205" class="sub">Stage 1 registers</text>
+  <text x="695" y="245" class="txt">mul_r_q[i]</text>
+  <text x="695" y="278" class="txt">mul_g_q[i]</text>
+  <text x="695" y="311" class="txt">mul_b_q[i]</text>
+  <text x="695" y="350" class="small">captured when valid_in=1</text>
+
+  <path d="M280,210 C315,210 325,210 360,210" class="wire"/>
+  <path d="M280,350 C315,350 325,350 360,350" class="wire"/>
+  <path d="M590,275 C625,275 635,275 670,275" class="wire"/>
+
+  <text x="70" y="465" class="sub">25 PEs feeding the pipelined reduction tree</text>
+
+  <rect x="70" y="500" width="130" height="88" class="mul"/>
+  <text x="96" y="530" class="txt">PE[0]</text>
+  <text x="88" y="556" class="small">R/G/B products</text>
+
+  <rect x="220" y="500" width="130" height="88" class="mul"/>
+  <text x="246" y="530" class="txt">PE[1]</text>
+  <text x="238" y="556" class="small">R/G/B products</text>
+
+  <rect x="370" y="500" width="130" height="88" class="mul"/>
+  <text x="392" y="530" class="txt">PE[2..23]</text>
+  <text x="388" y="556" class="small">same pattern</text>
+
+  <rect x="520" y="500" width="130" height="88" class="mul"/>
+  <text x="542" y="530" class="txt">PE[24]</text>
+  <text x="538" y="556" class="small">R/G/B products</text>
+
+  <rect x="720" y="470" width="165" height="70" class="sum"/>
+  <text x="748" y="500" class="txt">Stage 2</text>
+  <text x="738" y="523" class="small">8 sub-groups</text>
+
+  <rect x="720" y="565" width="165" height="70" class="sum"/>
+  <text x="748" y="595" class="txt">Stage 3</text>
+  <text x="738" y="618" class="small">4 group sums</text>
+
+  <rect x="930" y="470" width="165" height="70" class="sum"/>
+  <text x="958" y="500" class="txt">Stage 4</text>
+  <text x="948" y="523" class="small">Lo/Hi halves</text>
+
+  <rect x="930" y="565" width="165" height="70" class="sum"/>
+  <text x="958" y="595" class="txt">Stage 5</text>
+  <text x="946" y="618" class="small">final + &gt;&gt;&gt; Q8</text>
+
+  <rect x="1140" y="518" width="105" height="70" class="sat"/>
+  <text x="1160" y="548" class="txt">Stage 6</text>
+  <text x="1156" y="571" class="small">sat + pack</text>
+
+  <path d="M200,544 C400,544 590,505 720,505" class="thin"/>
+  <path d="M350,544 C505,544 620,505 720,505" class="thin"/>
+  <path d="M500,544 C610,544 660,600 720,600" class="thin"/>
+  <path d="M650,544 C690,544 700,600 720,600" class="thin"/>
+  <path d="M885,505 C905,505 910,505 930,505" class="wire"/>
+  <path d="M885,600 C905,600 910,600 930,600" class="wire"/>
+  <path d="M1012,540 C1012,552 1012,552 1012,565" class="wire"/>
+  <path d="M1095,600 C1120,600 1120,553 1140,553" class="wire"/>
+
+  <text x="70" y="650" class="small">Source mapping: Stage 0 multiply at mac_array_25x3.sv lines 111-121; Stage 1 product registers at lines 127-144; reduction tree starts at lines 151+.</text>
+</svg>

@@ -1,0 +1,91 @@
+{
+  "kernel_sum": 0,
+  "kernel_coefficients_q8": [
+    [
+      0,
+      0,
+      -16,
+      0,
+      0
+    ],
+    [
+      0,
+      -16,
+      -32,
+      -16,
+      0
+    ],
+    [
+      -16,
+      -32,
+      256,
+      -32,
+      -16
+    ],
+    [
+      0,
+      -16,
+      -32,
+      -16,
+      0
+    ],
+    [
+      0,
+      0,
+      -16,
+      0,
+      0
+    ]
+  ],
+  "rtl_tb_status": "PASS",
+  "golden_compare": "PASS",
+  "mismatch_pixels": 0,
+  "laplacian_vs_input_full": {
+    "shape_a": [
+      1080,
+      1920,
+      3
+    ],
+    "shape_b": [
+      1080,
+      1920,
+      3
+    ],
+    "min_delta": -255,
+    "max_delta": 15,
+    "mean_abs_delta": 73.87659529320987,
+    "max_abs_delta": 255,
+    "changed_channels": 6201401,
+    "changed_pixels": 2073600,
+    "psnr_db": 7.435408443547534,
+    "out_min": 0,
+    "out_max": 34,
+    "out_mean": 0.2166528420781893,
+    "out_std": 0.9227829120148929,
+    "nonzero_pixels": 305875
+  },
+  "laplacian_vs_input_valid_roi": {
+    "shape_a": [
+      1076,
+      1916,
+      3
+    ],
+    "shape_b": [
+      1076,
+      1916,
+      3
+    ],
+    "min_delta": -255,
+    "max_delta": 15,
+    "mean_abs_delta": 73.73968592275833,
+    "max_abs_delta": 255,
+    "changed_channels": 6165486,
+    "changed_pixels": 2061616,
+    "psnr_db": 7.44770357745902,
+    "out_min": 0,
+    "out_max": 34,
+    "out_mean": 0.21791222678390804,
+    "out_std": 0.925312773939275,
+    "nonzero_pixels": 305875
+  }
+}
