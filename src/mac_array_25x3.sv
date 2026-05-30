@@ -15,66 +15,69 @@ module mac_array_25x3 #(
     output logic [DATA_W-1:0]                   pixel_out
 );
     localparam int TAPS = KSIZE * KSIZE;
+    localparam int CH_W = DATA_W / 3;
+    localparam int PROD_W = CH_W + 1 + COEFF_W;
+    localparam int ACC_W = PROD_W + $clog2(TAPS) + 1;
 
     // =========================================================================
-    //  Pipeline overview (6-stage, targeting 100+ MHz on Zynq-7020)
+    //  Pipeline overview (6-stage, unchanged latency)
     //
-    //  Stage 1 (S1): 25 multiplies per channel  → register products
-    //  Stage 2 (S2): 8 sub-group partial sums   → register sub-group accumulators
-    //  Stage 3 (S3): 4 group merges (pairs)     → register group accumulators
-    //  Stage 4 (S4): 2-way merge (lo + hi)      → register merged accumulators
-    //  Stage 5 (S5): final merge + normalize    → register final accumulators
-    //  Stage 6 (S6): saturate + pack            → register output pixel
+    //  Stage 1 (S1): 25 multiplies per channel  -> register products
+    //  Stage 2 (S2): 8 sub-group partial sums   -> register sub-group accumulators
+    //  Stage 3 (S3): 4 group merges             -> register group accumulators
+    //  Stage 4 (S4): 2-way merge                -> register merged accumulators
+    //  Stage 5 (S5): final merge + normalize    -> register final accumulators
+    //  Stage 6 (S6): saturate + pack            -> register output pixel
     // =========================================================================
 
     // ---- Per-tap products (combinational) ----
-    logic signed [31:0] mul_r [0:TAPS-1];
-    logic signed [31:0] mul_g [0:TAPS-1];
-    logic signed [31:0] mul_b [0:TAPS-1];
+    (* use_dsp = "yes" *) logic signed [PROD_W-1:0] mul_r [0:TAPS-1];
+    (* use_dsp = "yes" *) logic signed [PROD_W-1:0] mul_g [0:TAPS-1];
+    (* use_dsp = "yes" *) logic signed [PROD_W-1:0] mul_b [0:TAPS-1];
 
     // ---- S1 registered products ----
-    logic signed [31:0] mul_r_q [0:TAPS-1];
-    logic signed [31:0] mul_g_q [0:TAPS-1];
-    logic signed [31:0] mul_b_q [0:TAPS-1];
+    logic signed [PROD_W-1:0] mul_r_q [0:TAPS-1];
+    logic signed [PROD_W-1:0] mul_g_q [0:TAPS-1];
+    logic signed [PROD_W-1:0] mul_b_q [0:TAPS-1];
 
-    // ---- S2 sub-group partial sums (8 sub-groups: 4+3, 3+3, 3+3, 3+3) ----
-    // Group0 = taps[0..6]  → sub0a=[0..3], sub0b=[4..6]
-    // Group1 = taps[7..12] → sub1a=[7..9], sub1b=[10..12]
-    // Group2 = taps[13..18]→ sub2a=[13..15], sub2b=[16..18]
-    // Group3 = taps[19..24]→ sub3a=[19..21], sub3b=[22..24]
-    logic signed [47:0] sub_r [0:7];
-    logic signed [47:0] sub_g [0:7];
-    logic signed [47:0] sub_b [0:7];
-    logic signed [47:0] sub_r_q [0:7];
-    logic signed [47:0] sub_g_q [0:7];
-    logic signed [47:0] sub_b_q [0:7];
+    // Runtime coefficient shadow bank. This is not a pixel pipeline stage:
+    // it only shortens the coefficient-to-DSP timing path.
+    logic signed [COEFF_W-1:0] coeff_q [0:TAPS-1];
 
-    // ---- S3 group sums (4 groups: merge sub-group pairs) ----
-    logic signed [47:0] grp_r [0:3];
-    logic signed [47:0] grp_g [0:3];
-    logic signed [47:0] grp_b [0:3];
-    logic signed [47:0] grp_r_q [0:3];
-    logic signed [47:0] grp_g_q [0:3];
-    logic signed [47:0] grp_b_q [0:3];
+    // ---- S2 sub-group partial sums ----
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] sub_r [0:7];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] sub_g [0:7];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] sub_b [0:7];
+    logic signed [ACC_W-1:0] sub_r_q [0:7];
+    logic signed [ACC_W-1:0] sub_g_q [0:7];
+    logic signed [ACC_W-1:0] sub_b_q [0:7];
 
-    // ---- S4 lo/hi merge (2 partial sums) ----
-    logic signed [47:0] half_r [0:1];
-    logic signed [47:0] half_g [0:1];
-    logic signed [47:0] half_b [0:1];
-    logic signed [47:0] half_r_q [0:1];
-    logic signed [47:0] half_g_q [0:1];
-    logic signed [47:0] half_b_q [0:1];
+    // ---- S3 group sums ----
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] grp_r [0:3];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] grp_g [0:3];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] grp_b [0:3];
+    logic signed [ACC_W-1:0] grp_r_q [0:3];
+    logic signed [ACC_W-1:0] grp_g_q [0:3];
+    logic signed [ACC_W-1:0] grp_b_q [0:3];
+
+    // ---- S4 lo/hi merge ----
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] half_r [0:1];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] half_g [0:1];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] half_b [0:1];
+    logic signed [ACC_W-1:0] half_r_q [0:1];
+    logic signed [ACC_W-1:0] half_g_q [0:1];
+    logic signed [ACC_W-1:0] half_b_q [0:1];
 
     // ---- S5 final accumulator + normalize ----
-    logic signed [47:0] acc_r;
-    logic signed [47:0] acc_g;
-    logic signed [47:0] acc_b;
-    logic signed [47:0] nr;
-    logic signed [47:0] ng;
-    logic signed [47:0] nb;
-    logic signed [47:0] nr_q;
-    logic signed [47:0] ng_q;
-    logic signed [47:0] nb_q;
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] acc_r;
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] acc_g;
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] acc_b;
+    logic signed [ACC_W-1:0] nr;
+    logic signed [ACC_W-1:0] ng;
+    logic signed [ACC_W-1:0] nb;
+    logic signed [ACC_W-1:0] nr_q;
+    logic signed [ACC_W-1:0] ng_q;
+    logic signed [ACC_W-1:0] nb_q;
 
     // ---- S6 saturate + output ----
     logic [7:0] r8_c;
@@ -89,13 +92,12 @@ module mac_array_25x3 #(
     logic valid_s5;
 
     // ---- Temporary extraction ----
-    logic [7:0] px_r;
-    logic [7:0] px_g;
-    logic [7:0] px_b;
+    logic [CH_W-1:0] px_r;
+    logic [CH_W-1:0] px_g;
+    logic [CH_W-1:0] px_b;
     logic signed [COEFF_W-1:0] coeff;
 
-    // ---- Saturation function ----
-    function automatic [7:0] sat_u8(input logic signed [47:0] val);
+    function automatic [7:0] sat_u8(input logic signed [ACC_W-1:0] val);
         if (val < 0) begin
             sat_u8 = 8'd0;
         end else if (val > 255) begin
@@ -110,14 +112,27 @@ module mac_array_25x3 #(
     // =====================================================================
     always_comb begin
         for (int i = 0; i < TAPS; i++) begin
-            px_r = window_flat[(i*DATA_W) +: 8];
-            px_g = window_flat[(i*DATA_W) + 8 +: 8];
-            px_b = window_flat[(i*DATA_W) + 16 +: 8];
-            coeff = kernel_flat[(i*COEFF_W) +: COEFF_W];
+            px_r = window_flat[(i*DATA_W) +: CH_W];
+            px_g = window_flat[(i*DATA_W) + CH_W +: CH_W];
+            px_b = window_flat[(i*DATA_W) + (2*CH_W) +: CH_W];
+            coeff = coeff_q[i];
 
-            mul_r[i] = $signed({1'b0, px_r}) * coeff;
-            mul_g[i] = $signed({1'b0, px_g}) * coeff;
-            mul_b[i] = $signed({1'b0, px_b}) * coeff;
+            mul_r[i] = coeff * $signed({1'b0, px_r});
+            mul_g[i] = coeff * $signed({1'b0, px_g});
+            mul_b[i] = coeff * $signed({1'b0, px_b});
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            for (int i = 0; i < TAPS; i++) begin
+                coeff_q[i] <= '0;
+            end
+            coeff_q[TAPS/2] <= (1 <<< KERNEL_Q);
+        end else if (!valid_in) begin
+            for (int i = 0; i < TAPS; i++) begin
+                coeff_q[i] <= kernel_flat[(i*COEFF_W) +: COEFF_W];
+            end
         end
     end
 
@@ -145,46 +160,38 @@ module mac_array_25x3 #(
     end
 
     // =====================================================================
-    //  STAGE 2 (combinational → registered): 8 sub-group partial sums
-    //  Balanced binary tree: max 4 additions per sub-group (depth 2)
+    //  STAGE 2 (combinational -> registered): 8 sub-group partial sums
+    //  Balanced tree: at most two adder levels in this stage.
     // =====================================================================
     always_comb begin
-        // Sub-group 0a: taps [0..3] — 4 inputs
         sub_r[0] = (mul_r_q[0] + mul_r_q[1]) + (mul_r_q[2] + mul_r_q[3]);
         sub_g[0] = (mul_g_q[0] + mul_g_q[1]) + (mul_g_q[2] + mul_g_q[3]);
         sub_b[0] = (mul_b_q[0] + mul_b_q[1]) + (mul_b_q[2] + mul_b_q[3]);
 
-        // Sub-group 0b: taps [4..6] — 3 inputs
         sub_r[1] = (mul_r_q[4] + mul_r_q[5]) + mul_r_q[6];
         sub_g[1] = (mul_g_q[4] + mul_g_q[5]) + mul_g_q[6];
         sub_b[1] = (mul_b_q[4] + mul_b_q[5]) + mul_b_q[6];
 
-        // Sub-group 1a: taps [7..9] — 3 inputs
         sub_r[2] = (mul_r_q[7] + mul_r_q[8]) + mul_r_q[9];
         sub_g[2] = (mul_g_q[7] + mul_g_q[8]) + mul_g_q[9];
         sub_b[2] = (mul_b_q[7] + mul_b_q[8]) + mul_b_q[9];
 
-        // Sub-group 1b: taps [10..12] — 3 inputs
         sub_r[3] = (mul_r_q[10] + mul_r_q[11]) + mul_r_q[12];
         sub_g[3] = (mul_g_q[10] + mul_g_q[11]) + mul_g_q[12];
         sub_b[3] = (mul_b_q[10] + mul_b_q[11]) + mul_b_q[12];
 
-        // Sub-group 2a: taps [13..15] — 3 inputs
         sub_r[4] = (mul_r_q[13] + mul_r_q[14]) + mul_r_q[15];
         sub_g[4] = (mul_g_q[13] + mul_g_q[14]) + mul_g_q[15];
         sub_b[4] = (mul_b_q[13] + mul_b_q[14]) + mul_b_q[15];
 
-        // Sub-group 2b: taps [16..18] — 3 inputs
         sub_r[5] = (mul_r_q[16] + mul_r_q[17]) + mul_r_q[18];
         sub_g[5] = (mul_g_q[16] + mul_g_q[17]) + mul_g_q[18];
         sub_b[5] = (mul_b_q[16] + mul_b_q[17]) + mul_b_q[18];
 
-        // Sub-group 3a: taps [19..21] — 3 inputs
         sub_r[6] = (mul_r_q[19] + mul_r_q[20]) + mul_r_q[21];
         sub_g[6] = (mul_g_q[19] + mul_g_q[20]) + mul_g_q[21];
         sub_b[6] = (mul_b_q[19] + mul_b_q[20]) + mul_b_q[21];
 
-        // Sub-group 3b: taps [22..24] — 3 inputs
         sub_r[7] = (mul_r_q[22] + mul_r_q[23]) + mul_r_q[24];
         sub_g[7] = (mul_g_q[22] + mul_g_q[23]) + mul_g_q[24];
         sub_b[7] = (mul_b_q[22] + mul_b_q[23]) + mul_b_q[24];
@@ -211,22 +218,22 @@ module mac_array_25x3 #(
     end
 
     // =====================================================================
-    //  STAGE 3 (combinational → registered): merge sub-group pairs → 4 groups
+    //  STAGE 3 (combinational -> registered): merge sub-group pairs
     // =====================================================================
     always_comb begin
-        grp_r[0] = sub_r_q[0] + sub_r_q[1];  // group0 = sub0a + sub0b
+        grp_r[0] = sub_r_q[0] + sub_r_q[1];
         grp_g[0] = sub_g_q[0] + sub_g_q[1];
         grp_b[0] = sub_b_q[0] + sub_b_q[1];
 
-        grp_r[1] = sub_r_q[2] + sub_r_q[3];  // group1 = sub1a + sub1b
+        grp_r[1] = sub_r_q[2] + sub_r_q[3];
         grp_g[1] = sub_g_q[2] + sub_g_q[3];
         grp_b[1] = sub_b_q[2] + sub_b_q[3];
 
-        grp_r[2] = sub_r_q[4] + sub_r_q[5];  // group2 = sub2a + sub2b
+        grp_r[2] = sub_r_q[4] + sub_r_q[5];
         grp_g[2] = sub_g_q[4] + sub_g_q[5];
         grp_b[2] = sub_b_q[4] + sub_b_q[5];
 
-        grp_r[3] = sub_r_q[6] + sub_r_q[7];  // group3 = sub3a + sub3b
+        grp_r[3] = sub_r_q[6] + sub_r_q[7];
         grp_g[3] = sub_g_q[6] + sub_g_q[7];
         grp_b[3] = sub_b_q[6] + sub_b_q[7];
     end
@@ -252,14 +259,14 @@ module mac_array_25x3 #(
     end
 
     // =====================================================================
-    //  STAGE 4 (combinational → registered): 2-way merge (lo + hi)
+    //  STAGE 4 (combinational -> registered): 2-way merge
     // =====================================================================
     always_comb begin
-        half_r[0] = grp_r_q[0] + grp_r_q[1];  // lo = group0 + group1
+        half_r[0] = grp_r_q[0] + grp_r_q[1];
         half_g[0] = grp_g_q[0] + grp_g_q[1];
         half_b[0] = grp_b_q[0] + grp_b_q[1];
 
-        half_r[1] = grp_r_q[2] + grp_r_q[3];  // hi = group2 + group3
+        half_r[1] = grp_r_q[2] + grp_r_q[3];
         half_g[1] = grp_g_q[2] + grp_g_q[3];
         half_b[1] = grp_b_q[2] + grp_b_q[3];
     end
@@ -281,7 +288,7 @@ module mac_array_25x3 #(
     end
 
     // =====================================================================
-    //  STAGE 5 (combinational → registered): final merge + normalize
+    //  STAGE 5 (combinational -> registered): final merge + normalize
     // =====================================================================
     always_comb begin
         acc_r = half_r_q[0] + half_r_q[1];
@@ -310,7 +317,7 @@ module mac_array_25x3 #(
     end
 
     // =====================================================================
-    //  STAGE 6 (combinational → registered): saturate + pack output
+    //  STAGE 6 (combinational -> registered): saturate + pack output
     // =====================================================================
     always_comb begin
         r8_c = sat_u8(nr_q);

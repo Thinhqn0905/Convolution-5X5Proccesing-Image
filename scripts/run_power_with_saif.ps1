@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$FrameHex = '.\captures\d455\full640_smoke\hex_in\frame_000000.hex',
-    [ValidateSet('identity5', 'gaussian5', 'sharpen5', 'emboss5', 'laplacian5')][string]$Kernel = 'gaussian5',
+    [ValidateSet('identity5', 'gaussian5', 'sharpen5', 'emboss5', 'laplacian5', 'sobel_x5', 'sobel_y5', 'sobel_neg_x5', 'sobel_neg_y5')][string]$Kernel = 'gaussian5',
     [int]$Width = 640,
     [int]$Height = 480,
     [string]$SaifOut = '.\sim\activity.saif',

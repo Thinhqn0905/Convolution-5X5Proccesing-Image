@@ -62,7 +62,30 @@ KERNELS = {
         ],
         dtype=np.int32,
     ),
+    "sobel_x5": np.array(
+        [
+            [-5, -10, 0, 10, 5],
+            [-20, -40, 0, 40, 20],
+            [-30, -60, 0, 60, 30],
+            [-20, -40, 0, 40, 20],
+            [-5, -10, 0, 10, 5],
+        ],
+        dtype=np.int32,
+    ),
+    "sobel_y5": np.array(
+        [
+            [-5, -20, -30, -20, -5],
+            [-10, -40, -60, -40, -10],
+            [0, 0, 0, 0, 0],
+            [10, 40, 60, 40, 10],
+            [5, 20, 30, 20, 5],
+        ],
+        dtype=np.int32,
+    ),
 }
+
+KERNELS["sobel_neg_x5"] = -KERNELS["sobel_x5"]
+KERNELS["sobel_neg_y5"] = -KERNELS["sobel_y5"]
 
 
 def sha1_file(path: Path) -> str:

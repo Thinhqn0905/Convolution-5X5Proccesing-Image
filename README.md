@@ -13,7 +13,7 @@ Lõi này là một IP xử lý ảnh RGB dạng streaming, nhận 1 pixel 24-bi
 - **Fixed-point gọn:** hệ số Q8, normalize bằng dịch phải số học 8 bit, không cần floating-point.
 - **Saturation an toàn:** giá trị âm hoặc tràn được clamp về `[0,255]`, tránh wrap-around gây nhiễu.
 - **Full-HD đã kiểm chứng bằng frame thật:** đã chạy 1 frame D455 lên feed `1920x1080`, xuất PNG/HEX và so bit với golden model.
-- **Timing headroom tốt:** trên Artix-7 `xc7a100tcsg324-1`, lõi `top_convolution` pass post-route ở `146 MHz`; `147 MHz` fail nhẹ.
+- **Timing headroom tốt:** baseline cũ pass post-route ở `146 MHz`; Design B mới pass post-route ở `200 MHz` với WNS `+0.250 ns`.
 - **Tài nguyên LUT thấp:** khoảng `3.99%` LUT trên Arty A7 100T class device.
 - **Dễ ghép pipeline khác:** có thể nhận ảnh HEX từ camera hoặc spectrogram ECG nếu dữ liệu được pack thành RGB pixel stream.
 
@@ -35,6 +35,7 @@ Lõi này là một IP xử lý ảnh RGB dạng streaming, nhận 1 pixel 24-bi
 | Output valid region | từ `(x>=4, y>=4)`; biên trên/trái không có output valid |
 | Full-HD input frame | `1920x1080 = 2,073,600` pixels |
 | Full-HD valid output | `(1920-4)*(1080-4) = 2,061,616` pixels |
+| Theoretical throughput @200 MHz Design B | `200 Mpixel/s`, khoảng `96.5 FPS` cho 1080p input stream |
 | Theoretical throughput @146 MHz | `146 Mpixel/s`, khoảng `70.4 FPS` cho 1080p input stream |
 | Theoretical throughput @100 MHz | `100 Mpixel/s`, khoảng `48.2 FPS` cho 1080p input stream |
 
@@ -57,6 +58,48 @@ Các report chính:
 - `vivado_project/fmax_sweep_refine2/fmax_sweep_summary.csv`
 - `vivado_project/fmax_sweep_refine2/146MHz/timing_post_route.rpt`
 - `vivado_project/fmax_sweep_refine2/146MHz/util_post_route.rpt`
+
+## Design B 200 MHz Update (2026-05-28)
+
+Design B keeps the MAC at 6 stages and changes the timing/resource strategy:
+
+- Addressless SRL-based line buffer instead of indexed line-buffer reads.
+- Coefficient shadow register `coeff_q`, updated only when `valid_in=0`.
+- Coefficient-stationary multicycle path applied from `coeff_q` to DSP multipliers.
+- Accumulator width reduced to the required Q8.8 range for RGB888 5x5 kernels.
+
+Post-route Design B result on `xc7a100tcsg324-1`, `IMAGE_WIDTH=1920`:
+
+| Clock | Period | Status | WNS | WHS | Fmax estimate |
+| :--- | ---: | :---: | ---: | ---: | ---: |
+| 200 MHz | 5.000 ns | PASS | +0.250 ns | +0.069 ns | 210.53 MHz |
+
+Post-route Design B utilization:
+
+| Resource | Used | Utilization |
+| :--- | ---: | ---: |
+| Slice LUTs | 7,236 | 11.41% |
+| LUT as Shift Register | 5,760 | 30.32% of LUTRAM pool |
+| Slice Registers | 1,727 | 1.36% |
+| Block RAM Tile | 0 | 0.00% |
+| DSPs | 75 | 31.25% |
+
+SAIF-annotated post-route power at 200 MHz:
+
+| Item | Value |
+| :--- | ---: |
+| Total On-Chip Power | 0.421 W |
+| Dynamic Power | 0.329 W |
+| Device Static Power | 0.092 W |
+| Confidence Level | Medium |
+| Design Nets Matched | 4% |
+
+Reports:
+
+- `vivado_project/fmax_sweep_impl_design_b/impl_fmax_sweep_summary.csv`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/timing_post_route.rpt`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/util_post_route.rpt`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/power_post_route_saif.rpt`
 
 ## Tài Nguyên
 
@@ -243,4 +286,3 @@ E:\Vivado\2023.2\bin\vivado.bat -mode batch -source scripts/run_fmax_sweep.tcl -
 - Power report cần SAIF/VCD coverage tốt hơn nếu muốn power signoff.
 - Board path UART phù hợp demo/chứng minh chức năng, không phải đường truyền camera Full-HD real-time trực tiếp.
 - Project có cả core top và board demo top; khi báo cáo timing/Fmax nên ghi rõ đang đo `top_convolution`, không phải toàn bộ `arty_top`.
-

@@ -3,7 +3,17 @@ $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
 Set-Location $workspace
 
-$kernels = @('identity5', 'gaussian5', 'sharpen5', 'emboss5', 'laplacian5')
+$kernels = @(
+    'identity5',
+    'gaussian5',
+    'sharpen5',
+    'emboss5',
+    'laplacian5',
+    'sobel_x5',
+    'sobel_y5',
+    'sobel_neg_x5',
+    'sobel_neg_y5'
+)
 
 python .\python\synthetic_frames.py --out .\hex --count 1 --width 16 --height 16
 if ($LASTEXITCODE -ne 0) {

@@ -31,6 +31,17 @@ try {
 '@.Replace('__HALF_NS__', $halfNsText)
     Set-Content -LiteralPath $cfgFile -Value $cfgText -Encoding ascii
 
+    $imgCfgFile = Join-Path (Get-Location).Path 'saif_image_cfg.svh'
+    $imgCfgText = @'
+`ifndef TB_IMAGE_W
+`define TB_IMAGE_W __WIDTH__
+`endif
+`ifndef TB_IMAGE_H
+`define TB_IMAGE_H __HEIGHT__
+`endif
+'@.Replace('__WIDTH__', [string]$Width).Replace('__HEIGHT__', [string]$Height)
+    Set-Content -LiteralPath $imgCfgFile -Value $imgCfgText -Encoding ascii
+
     $xvlogArgs = @(
         '-sv',
         '..\src\top_convolution.sv',

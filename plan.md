@@ -1,254 +1,768 @@
-# PLAN CHI TIET DO AN: RGB 5x5 CONVOLUTION ENGINE (ZYNQ + D455)
+<context>
+## Project: FPGA Image Preprocessing Core for Alzheimer MRI Classification
 
-## 1. Muc tieu va pham vi
-- Xay dung pipeline 5x5 RGB convolution co kernel nap runtime.
-- Hoan tat luong: camera Intel RealSense D455 -> stream du lieu -> xu ly -> xuat anh truoc/sau.
-- Duy tri bo test regression cho RTL va doi chieu output.
-- Chot duoc tai lieu tong ket cho seminar (demo + report + so lieu).
+### Hardware Design (locked decisions)
+- Runtime-configurable generic 5×5 RGB convolution streaming core
+- Kernels verified (0 mismatch, 2,061,616 valid outputs): Identity, Gaussian, Sharpen, Emboss, Laplacian
+- Sobel: lõi hỗ trợ Sobel-X 5×5 và Sobel-Y 5×5 runtime-loadable; magnitude computed downstream
+- Kernel load protocol: coeff_q shadow register, update when valid_in=0 only
+- CPU benchmark: OpenCV GaussianBlur Ryzen 7 5800H: 1018 Mpix/s (16T), 303 Mpix/s (1T)
+- FPGA không claim thắng desktop CPU — claim đúng là streaming hardware deterministic latency + embedded efficiency
 
-Nguyen tac bat buoc:
-- Python chi capture/feed/automation.
-- Convolution phai do RTL thuc hien (simulation hoac FPGA), khong duoc xu ly bang Python.
+### Paper positioning (locked)
+- Title direction: "Runtime-Configurable FPGA Preprocessing Accelerator for Downstream Alzheimer MRI Classification"
+- NOT claiming: FPGA replaces CNN, Sobel improves accuracy, FPGA faster than Ryzen
+- IS claiming: hardware streaming preprocessing core + runtime kernel config + downstream evaluation
+- Baseline so sánh: ARM Cortex-A embedded (Raspberry Pi / Zynq PS), NOT desktop CPU
+- Novel point 1: Addressless SRL-based window generator (Design B) eliminates x_count→memory timing path
+- Novel point 2: Shadow coefficient register (coeff_q) for timing-stable runtime kernel swap
+- Novel point 3: Generic 5×5 uniform throughput regardless of kernel separability
+- Novel point 4: Application-level evaluation: FPGA preprocessing modes → downstream Alzheimer classifier
 
-## 2. Trang thai hien tai (2026-03-18)
+### Application layer (to be designed)
+- Dataset: Alzheimer MRI 2D (OASIS or Kaggle 4-class: NonDemented/VeryMild/Mild/Moderate)
+- Downstream model: ResNet18 or ResNet50, runs on PC/GPU, weights fixed during evaluation
+- Preprocessing branches to evaluate: Raw, Gaussian, Sharpen, Laplacian, Sobel-X, Sobel-Y, Sobel-magnitude, Unsharp Mask
+- Sobel pipeline: 2-pass (Sobel-X then Sobel-Y via FPGA) → software magnitude |Gx|+|Gy| → feed CNN
+- Goal: measure which preprocessing mode preserves/degrades discriminative MRI features
+- Metric: Accuracy, F1-score, Precision, Recall per preprocessing branch
 
-## Da hoan thanh
-- RTL baseline da co: line buffer 5x5, kernel loader, MAC 25x3, top integration.
-- Testbench self-check da co va da regression 5 kernel PASS.
-- Pipeline D455 da chay that:
-  - Stream lien tuc tren may hien tai.
-  - Da luu anh raw + feed_rgb + hex_in.
-  - Da xu ly ra processed + hex_out bang RTL simulation tu hex_in.
-- Skeleton Vivado da co (create project, run synth/impl, constraints mau).
-- Da co benchmark sim/frame cho full 640x480 (N frame) va xuat JSON/CSV report.
-- Da tao AXI wrapper skeleton: src/axi_stream_conv_wrapper.sv, src/axi_lite_kernel_ctrl.sv.
+### What is NOT done yet (open tasks)
+- Post-route Design B at 200 MHz (critical)
+- Power measurement / Vivado Power Analysis for GOPS/W
+- Sobel magnitude pipeline implementation and test
+- Raspberry Pi / ARM baseline benchmark
+- CNN downstream evaluation (accuracy per kernel)
+- Paper writing
 
-## Ket qua chay that gan nhat
-- D455 stream (8s/kernel):
-  - gaussian5: 88 frame, ~10.02 fps
-  - sharpen5: 92 frame, ~10.48 fps
-  - laplacian5: 90 frame, ~10.21 fps
-- RTL regression:
-  - identity5, gaussian5, sharpen5, emboss5, laplacian5: PASS
-  - valid_count = 144/144 moi case (test 16x16)
-- Benchmark campaign 640x480:
-  - gaussian5: report da tao (sim_wall_ms_mean, p95, fps proxy)
-  - sharpen5: report da tao (sim_wall_ms_mean, p95, fps proxy)
-- Vivado synth/impl batch da chay xong:
-  - Vong dau @125MHz: WNS=-40.656 ns, TNS=-2294.210 ns (chua dat)
-  - Vong toi uu bring-up @20MHz (pipeline MAC + constraint moi):
-    - Timing post-route: WNS=+22.577 ns, TNS=0.000 ns (dat)
-    - Utilization post-route: LUT=930 (1.75%), FF=203 (0.19%), BRAM Tile=1 (0.71%), DSP=78 (35.45%)
-    - Power post-route (co VCD): Total=0.127W, Dynamic=0.022W, Static=0.105W
-    - Luu y: confidence van low vi activity net match 0% (3/6256)
+### Constraints
+- MUST NOT claim: "preprocessing improves Alzheimer detection accuracy" as a given
+- MUST frame accuracy results as evaluation/measurement, not as improvement claim
+- MUST include post-route numbers before claiming 200 MHz officially
+- Sobel MUST be called "Sobel-like 5×5 gradient operator" or "extended Sobel" not plain "Sobel 3×3"
+các bài minh chứng sobel 5x5 tốt hơn 3x3 cho MRI alzheimer:
+Luận điểm 1: Sobel preprocessing cải thiện CNN trên medical image
+[P1] — Tang et al., PeerJ Computer Science, 2023
+"Diagnostic efficiency of multi-modal MRI deep learning with Sobel operator" — dùng Sobel operator kết hợp CNN multi-modal để phân loại breast MRI benign/malignant, đây là paper trực tiếp nhất chứng minh Sobel + deep learning + MRI hoạt động tốt.
+→ DOI: 10.7717/peerj-cs.1460 nih
+[P2] — IEEE Xplore 2020 (Facial Expression)
+"Facial Expression Recognition Based on Sobel Operator and Improved CNN-SVM" — thêm Sobel edge detection vào preprocessing stage trước CNN cải thiện accuracy +3.71% trên CK+ dataset.
+→ IEEE Xplore, DOI: 10.1109/9232063 IEEE Xplore
+[P3] — Sensors 2023
+"Multi-Attention Segmentation Networks Combined with the Sobel Operator for Medical Images" — Sobel operator được tích hợp vào deep learning pipeline cho medical image segmentation, cải thiện khả năng focus vào key region.
+→ DOI: 10.3390/s23052546 MDPI
+ Luận điểm 2: Extended/multi-direction Sobel tốt hơn 3×3 chuẩn cho brain MRI
+[P4] — Remya Ajai & Gopalan, Procedia Computer Science, 2022 ⭐ Paper quan trọng nhất
+"Comparative Analysis of Eight Direction Sobel Edge Detection Algorithm for Brain Tumor MRI Images" — Sobel 8 hướng detect được tumor shape bất quy tắc trong brain MRI tốt hơn các edge detection algorithm truyền thống.
+→ Procedia Computer Science Vol. 201, pp. 487–494, 2022 ResearchGate
+[P5] — Chang et al., Journal of Parallel and Distributed Computing, 2023
+"Multi-directional Sobel operator kernel on GPUs" — khẳng định rõ: "5×5 Sobel operator có edge detection robustness tương đương 7×7 nhưng cao hơn 3×3", đặc biệt với multi-directional application.
+→ DOI: 10.1016/j.jpdc.2023.03.004 arxiv
+[P6] — Image Segmentation for Mammographic Images (ResearchGate)
+"Image Segmentation using Extended Edge Operator for Mammographic Images" — để đạt segmentation tốt hơn, 3×3 kernel được mở rộng lên 5×5 kernel thể hiện linear region rõ ràng hơn, phù hợp với medical image có cấu trúc thưa. ResearchGate
 
-## Artifact da tao
-- captures/d455/gaussian5/raw + processed + hex_in + hex_out
-- captures/d455/sharpen5/raw + processed + hex_in + hex_out
-- captures/d455/laplacian5/raw + processed + hex_in + hex_out
-- captures/d455/*/feed_rgb (anh feed vao RTL simulation)
-- sim/tb_out_<kernel>.hex va sim/expected_<kernel>.hex
-- captures/d455/campaign640/campaign_summary.json
-- captures/d455/campaign640/rtl_benchmark_<kernel>.json/.csv
-- tb/tb_axi_stream_conv_wrapper.sv
-- src/axi_stream_conv_wrapper.sv
-- src/axi_lite_kernel_ctrl.sv
+Luận điểm 3: Cortical boundary là key feature của Alzheimer
+[P7] — AlSaeed & Omar, Sensors, 2022
+"Brain MRI Analysis for Alzheimer's Disease Diagnosis Using CNN" — dùng FreeSurfer để extract 68 features của cortical thickness làm input chính cho model, xác nhận boundary/gradient feature là discriminative nhất cho Alzheimer.
+→ DOI: 10.3390/s22082911 PubMed Central
+[P8] — Novel CNN Architecture, Scientific Reports, 2024
+"A novel CNN architecture for accurate early detection of Alzheimer's disease" — xác nhận feature quan trọng nhất trong Alzheimer MRI là grey/white matter volumes, cortical thickness, và CSF levels — tất cả đều là boundary feature.
+→ DOI: 10.1038/s41598-024-53733-6 Nature
+Luận điểm 4: Preprocessing cải thiện Alzheimer classification
+[P9] — arXiv 2023
+"Improvement in Alzheimer's Disease MRI Images via Topological Optimization" — áp dụng boundary enhancement, contrast và brightness adjustment trước CNN (VGG16, ResNet50, InceptionV3, Xception) làm accuracy tăng từ 74.25% → 88.66% (+14%).
+→ arXiv:2310.16857 arxiv
+[P10] — Bilateral filtering paper, PMC 2024
+"A bilateral filtering-based image enhancement for Alzheimer disease classification using CNN" — noise trong MRI ảnh hưởng trực tiếp đến CNN accuracy; preprocessing giảm noise và tăng brightness cải thiện classification performance rõ rệt. nih
+</context>
+Luận điểm cần prove          Paper cite
+─────────────────────────────────────────────
+Sobel + CNN cải thiện        [P1] Tang 2023
+accuracy trên MRI            [P2] IEEE 2020
 
-## 3. Research tom tat (cho phase camera + FPGA)
+Extended Sobel tốt hơn       [P4] Remya 2022  ← quan trọng nhất
+3×3 cho brain MRI            [P5] Chang 2023
+                             [P6] Mammographic
 
-## 3.1 Tham khao camera va Python wrapper
-Nguon tham khao chinh:
-- librealsense Python examples:
-  - wrappers/python/examples/opencv_viewer_example.py
-  - wrappers/python/examples/align-depth2color.py
-  - wrappers/python/examples/frame_queue_example.py
+Cortical boundary =          [P7] AlSaeed 2022
+key Alzheimer feature        [P8] Scientific Reports 2024
 
-Ket luan ap dung:
-- Dung rs.pipeline + rs.config + enable_stream(color, BGR8) la luong co ban on dinh.
-- Dung wait_for_frames() theo vong lap cho stream lien tuc.
-- Neu can toc do cao hon, uu tien frame queue/multi-thread va giam tan suat ghi file.
+Preprocessing → accuracy     [P9] arXiv 2023
+tăng với Alzheimer CNN       [P10] PMC 2024
+<task>
+Generate a complete, prioritized research and paper execution plan for this FPGA + Alzheimer preprocessing paper. 
 
-## 3.2 Tham khao phan cung so va DSP
-Nguon tham khao chinh:
-- AMD/Xilinx UG479 (DSP48E1)
-- AMD/Xilinx UG902 (synthesis flow)
+The plan MUST:
+1. Order all remaining tasks by dependency (what blocks what)
+2. Separate into phases: Hardware Validation → Software/CNN Evaluation → Paper Writing
+3. For each task specify: what to do, what output it produces, and what it unblocks
+4. Flag the single highest-risk item that could break the paper if skipped
+5. Suggest the minimum viable paper path if time is limited (fast track)
+6. Include specific kernel values for Sobel-X 5×5 and Sobel-Y 5×5 that fit the Q8.8 fixed-point coefficient format of the FPGA core
 
-Ket luan ap dung:
-- MAC 25 tap RGB can uu tien pipeline ro rang truoc khi day fmax.
-- Gate quan trong cho phase synth: WNS > 0, thong ke DSP/BRAM/Fmax, sau do moi chot throughput.
+Output format:
+- Phase headers
+- Numbered tasks under each phase
+- Fast-track path clearly marked
+- Risk flag clearly marked
+- Kernel coefficient tables for Sobel 5×5 in Q8.8 format
+- Language: Vietnamese for explanations, English for technical terms and kernel values
+</task>
 
-## 4. Ke hoach phase chi tiet tu hien tai den final
+## Completed execution plan
 
-## Phase A - Camera capture/feed + RTL output (DA XONG)
-Muc tieu:
-- Stream D455 lien tuc, xuat feed cho RTL, va xuat anh sau xu ly tu RTL.
-Deliverable:
-- Script stream camera: python/d455_stream_process.py
-- Script xu ly feed bang RTL simulation: python/rtl_process_hex_frames.py
-- Script orchestration: scripts/run_live_multi_kernel_demo.ps1
-- Output frame bundles trong captures/d455/*
-Tieu chi pass:
-- Co anh raw, feed_rgb, processed cung frame index.
-- Co hex_in va hex_out cung frame index.
+### Verdict: lõi hiện tại có phù hợp để phát triển lên không?
 
-## Phase B - RTL regression toan bo kernel (DA XONG)
-Muc tieu:
-- Xac nhan tinh dung RTL voi bo kernel bat buoc.
-Deliverable:
-- scripts/run_regression.ps1
-- python/prepare_case.py (tao kernel.hex va expected.hex)
-Tieu chi pass:
-- 5/5 kernel PASS.
-- Moi case co 144 output line cho test 16x16.
+Có. Lõi hiện tại phù hợp để phát triển thành một FPGA preprocessing accelerator cho Alzheimer MRI classification vì các điểm mạnh chính đã đúng hướng:
 
-## Phase C - Test case mo rong can lam tiep (CAN THUC HIEN)
-Muc tieu:
-- Tang do tin cay truoc khi vao synth/hardware demo.
-Cong viec:
-1. Them test case reset giua frame.
-2. Them test case valid gap/back-pressure.
-3. Them test case overflow/saturation voi kernel am/duong lon.
-4. Them test 32x32 va 640x480 synthetic profile.
-Deliverable:
-- File testbench mo rong trong tb/.
-- Bao cao pass/fail theo tung case.
-Gate pass:
-- Khong X/Z khi out_valid=1.
-- mismatch_count=0 voi expected stream.
+- Runtime-configurable arbitrary 5x5 kernel, phù hợp cho nhiều preprocessing modes mà không đổi RTL.
+- Streaming one-pixel-per-clock, deterministic latency, hợp với edge/embedded preprocessing hơn là batch CPU.
+- Đã có validation Full-HD cho nhiều kernel: identity, Gaussian, sharpen, emboss, Laplacian.
+- Design B có novelty rõ hơn: addressless SRL-based window generator và coefficient-stationary runtime kernel.
 
-Trang thai cap nhat:
-- Dang can bo sung bo test reset-mid-frame, valid-gap, saturation-stress de dat gate C day du.
+Điều kiện bắt buộc khi phát triển tiếp:
 
-## Phase D - Synthesis va timing closure (CAN THUC HIEN)
-Muc tieu:
-- Dat gate ky thuat >=250 MP/s (muc thuc dung), huong toi 300 MP/s.
-Cong viec:
-1. Chay vivado_project/project_create.tcl.
-2. Chay vivado_project/run_synth.tcl.
-3. Phan tich report: timing_post_route.rpt, util_post_route.rpt, power_post_route.rpt.
-4. Toi uu: bo sung pipeline stage neu can, can bang resource.
-Deliverable:
-- report timing/resource/power.
-Gate pass:
-- WNS > 0.
-- Co cong thuc throughput ro rang theo freq x pixel_per_clock.
+- Không claim FPGA thay CNN.
+- Không claim preprocessing chắc chắn cải thiện Alzheimer accuracy trước khi đo.
+- Không claim 200 MHz chính thức nếu chưa có post-route timing closure.
+- Với Sobel magnitude, phải xử lý vấn đề signed gradient vì output hiện tại saturate âm về 0.
 
-Trang thai cap nhat:
-- Bring-up timing da dat o 40 MHz.
-- Can sweep them de tim muc tan so timing-clean cao nhat truoc board.
-- Flow SAIF da on dinh, confidence power hien tai la Medium.
+---
 
-## Phase E - Hardware integration realtime (CAN THUC HIEN)
-Muc tieu:
-- Chay duoc duong camera -> FPGA -> output hien thi/ghi ket qua.
-Cong viec:
-1. Chon giao tiep runtime kernel (AXI-Lite/UART).
-2. Hoan tat wrapper stream input/output.
-3. Dong bo format pixel va toc do truyen.
-4. Chay demo switch kernel realtime.
-Deliverable:
-- Video demo truc tiep.
-- Log thoi gian va fps he thong.
-Gate pass:
-- Chuyen kernel khong vo frame.
-- He thong chay on dinh trong thoi gian demo.
+## Phase 1 - Hardware Validation
 
-Trang thai cap nhat:
-- Chua len board runtime.
-- Da co tai lieu runbook day du de vao board: docs/board_streaming_guide.md.
+### 1. Freeze hardware claim baseline
 
-## Phase F - Bao cao va chot seminar (CAN THUC HIEN)
-Muc tieu:
-- Chot slide + report day du ky thuat.
-Noi dung bat buoc:
-1. Kien truc 5x5 va dataflow.
-2. Ket qua camera stream truoc/sau.
-3. Ket qua regression va waveform checklist.
-4. Ket qua synthesis/timing/resource.
-5. Bai hoc kinh nghiem va huong mo rong.
+What to do:
 
-## 5. Lenh chay chuan (runbook)
+- Chốt hai nhánh kết quả phần cứng:
+  - Baseline A: post-route 146 MHz đã có.
+  - Design B: SRL line buffer + coeff_q, hiện có post-synthesis 200 MHz.
+- Ghi rõ Design B vẫn giữ 6-stage MAC pipeline.
 
-## Camera stream + xuat anh
-- scripts/run_live_multi_kernel_demo.ps1
+Output:
 
-## Chay 1 kernel camera ngắn
-- C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/d455_stream_process.py --width 640 --height 480 --fps 30 --feed_width 16 --feed_height 16 --duration_sec 5 --max_frames 150 --save_every 10 --out_dir captures/d455/smoke
-- C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe python/rtl_process_hex_frames.py --workspace . --in_dir captures/d455/smoke/hex_in --out_dir captures/d455/smoke --kernel gaussian5 --width 16 --height 16 --python_exe C:/Users/ADMIN/AppData/Local/Programs/Python/Python310/python.exe
+- Một bảng hardware summary: frequency, timing stage, LUT, FF, BRAM, DSP, throughput.
 
-## Regression RTL
-- scripts/run_regression.ps1
+Unblocks:
 
-## Dem so dong output testbench
-- (Get-Content .\sim\tb_out.hex | Measure-Object -Line).Lines
+- Paper result section.
+- Quyết định claim chính là 146 MHz post-route hay 200 MHz nếu route pass.
 
-## 6. KPI va gate chap nhan
-- Functional:
-  - 5 kernel regression PASS.
-  - testbench self-check mismatch=0, unknown=0.
-- Camera pipeline:
-  - Co cap anh before/after cho moi kernel da chay.
-  - Co hex input/output frame theo index.
-- Synthesis:
-  - WNS > 0.
-  - Co bang resource DSP/BRAM.
-- Demo:
-  - Trinh dien switch kernel voi luong du lieu thuc te.
+### 2. Run post-route Design B frequency sweep
 
-## 7. Rui ro va giam thieu
-- FPS camera software thap khi ghi file nhieu:
-  - Giam save_every, tach thread ghi file, uu tien xử ly tren FPGA.
-- Sai lech mapping output giua software va RTL:
-  - Giu nguyen quy tac valid window x>=4, y>=4 trong script expected.
-- Timing fail sau synth:
-  - Tang pipeline stage, don gian hoa duong valid/control, toi uu ranh gioi module.
+What to do:
 
-## 8. Cong viec tiep theo ngay lap tuc (48h)
-1. Them 3 test case mo rong: reset-mid-frame, valid-gap, saturation-stress.
-2. Chay sweep SAIF o nhieu period de chon muc board clock an toan va co bien timing.
-3. Nang AXI wrapper tu skeleton len handshake day du, ket noi DMA trong block design.
+- Chạy implementation/post-route cho Design B ở các mốc:
+  - 200 MHz
+  - 190 MHz
+  - 180 MHz
+  - 170 MHz
+  - 160 MHz nếu cần fallback
+- Dùng cùng top `top_convolution`, part `xc7a100tcsg324-1`, `IMAGE_WIDTH=1920`.
+- Giữ constraint coefficient-stationary hợp lệ: kernel chỉ update khi `valid_in=0`.
 
-## 9. Xu ly loi path trong flow Vivado (bat buoc)
-Muc tieu:
-- Neu xuat hien `The system cannot find the path specified.` thi script phai dung ngay va khong tiep tuc ket qua dang ngo.
+Output:
 
-Da thuc hien:
-- scripts/run_power_with_saif.ps1 va scripts/sweep_clock_with_saif.ps1 da co che do strict.
-- Co co che:
-  1. Bat chuoi loi path trong output Vivado.
-  2. Dung ngay run hien tai.
-  3. Thu 1 lan auto-repair bang regenerate project.
-  4. Neu van loi, throw va in log path cu the.
+- `timing_post_route.rpt`
+- `util_post_route.rpt`
+- Fmax table với WNS/WHS.
 
-Log kiem tra:
-- vivado_project/reports/vivado_power_with_saif.log
-- vivado_project/reports/vivado_sweep_<period>ns.log
-- vivado_project/reports/vivado_path_repair.log
+Unblocks:
 
-## 10. Ke hoach chot truoc khi dua len board
-Phai PASS cac gate sau:
-1. Gate A (functional regression): PASS 5/5 kernel.
-2. Gate B (D455 data-path): du artifact raw/feed/processed/hex_in/hex_out theo frame index.
-3. Gate C (stress): reset-mid-frame, valid-gap, saturation.
-4. Gate D (timing/resource): timing-clean o board clock du kien.
-5. Gate E (power): SAIF applied, confidence toi thieu Medium.
-6. Gate F (interface): AXI stream/lite test co backpressure PASS.
+- Claim tần số chính thức.
+- Hardware comparison table.
+- Power analysis sau route.
 
-Tai lieu bat buoc:
-- docs/pre_board_verification_plan.md
-- docs/board_streaming_guide.md
-- docs/saif_power_flow.md
+### 3. Validate RTL regression after Design B
 
-## 11. Delta implementation (2026-03-18, Muc A local)
-- Da them luong 1 lenh de tao demo xem output va bao cao pass/fail:
-  - scripts/run_live_multi_kernel_demo.ps1
-- Da them tool tao video side-by-side input/output:
-  - python/build_side_by_side_video.py
-- Da them tool signoff local:
-  - python/signoff_level_a.py
-- Da nang report frame-level trong RTL processing:
-  - python/rtl_process_hex_frames.py (tb_status, mismatch, unknown, valid counters)
-- Artifact demo local da tao tren bo capture benchmark:
-  - captures/d455/benchmark640/preview_side_by_side.mp4
-  - captures/d455/benchmark640/level_a_signoff.md
-  - captures/d455/benchmark640/level_a_signoff.json
+What to do:
+
+- Chạy lại regression cho:
+  - `identity5`
+  - `gaussian5`
+  - `sharpen5`
+  - `laplacian5`
+  - `emboss5`
+  - `sobel_x5`
+  - `sobel_y5`
+- So sánh với Python golden model.
+
+Output:
+
+- PASS/FAIL table.
+- Mismatch count.
+- Valid output count.
+
+Unblocks:
+
+- Correctness claim.
+- Paper verification section.
+
+### 4. Add Sobel-like 5x5 kernel cases
+
+What to do:
+
+- Thêm Sobel-X 5x5 và Sobel-Y 5x5 vào Python golden model/test scripts.
+- Gọi là `Sobel-like 5x5 gradient operator` hoặc `extended Sobel`, không gọi là Sobel 3x3.
+- Dùng kernel Q8.8 ở cuối plan này.
+
+Output:
+
+- `sobel_x5` and `sobel_y5` test cases.
+- Example output images for MRI/normal image.
+
+Unblocks:
+
+- Application preprocessing branch.
+- CNN evaluation branch for edge/gradient inputs.
+
+### 5. Resolve signed-gradient/magnitude protocol
+
+What to do:
+
+- Kiểm tra lại pipeline hiện tại: MAC result sau `>>> 8` bị saturate về RGB888, giá trị âm bị clamp về 0.
+- Chọn một trong hai hướng:
+  - No RTL change: chạy 4 passes `+Gx`, `-Gx`, `+Gy`, `-Gy`; software lấy `abs(Gx)=max(+Gx,-Gx)`, `abs(Gy)=max(+Gy,-Gy)`.
+  - Small RTL option: thêm optional signed/bias/abs output mode ở stage pack, rồi chạy 2 passes `Gx`, `Gy`.
+
+Output:
+
+- Sobel magnitude method đã được document.
+- Golden model matching.
+- Một ảnh `sobel_magnitude`.
+
+Unblocks:
+
+- Downstream CNN Sobel-magnitude branch.
+- Tránh lỗi claim sai về `|Gx|+|Gy|`.
+
+### 6. Measure power with useful activity
+
+What to do:
+
+- Generate SAIF/VCD từ realistic frame stream.
+- Chạy Vivado Power Analysis cho post-route design.
+- Report:
+  - static power
+  - dynamic power
+  - total power
+  - activity coverage
+  - throughput per watt
+
+Output:
+
+- `power_post_route_saif.rpt`
+- GOPS/W hoặc Mpix/s/W.
+
+Unblocks:
+
+- Hardware efficiency comparison.
+- ARM/Raspberry Pi comparison.
+
+### 7. Run ARM/Raspberry Pi embedded baseline
+
+What to do:
+
+- Chạy cùng benchmark trên Raspberry Pi hoặc ARM Cortex-A/Zynq PS:
+  - naive C 5x5, single thread
+  - OpenCV `filter2D`, single thread
+  - OpenCV `GaussianBlur`, clearly marked as optimized separable special case
+- Kernels:
+  - Gaussian
+  - Sharpen
+  - Laplacian
+  - Sobel-X
+  - Sobel-Y
+
+Output:
+
+- Embedded CPU baseline table: ms/frame, FPS, Mpix/s, power if measurable.
+
+Unblocks:
+
+- Fair software baseline.
+- Paper comparison section.
+
+---
+
+## Phase 2 - Software/CNN Evaluation
+
+### 8. Select and freeze Alzheimer MRI dataset
+
+What to do:
+
+- Chọn một dataset chính:
+  - Kaggle 4-class Alzheimer MRI nếu cần fast-track.
+  - OASIS nếu muốn academic hơn nhưng setup nặng hơn.
+- Freeze split:
+  - train
+  - validation
+  - test
+- Ghi rõ subject-level split nếu dataset cho phép, tránh data leakage.
+
+Output:
+
+- Dataset manifest.
+- Class distribution table.
+- Split seed.
+
+Unblocks:
+
+- Reproducible CNN evaluation.
+- Paper application section.
+
+### 9. Build preprocessing export pipeline
+
+What to do:
+
+- Tạo cùng một input MRI resize/crop policy cho tất cả branches.
+- Export các branches:
+  - Raw
+  - Gaussian
+  - Sharpen
+  - Laplacian
+  - Sobel-X
+  - Sobel-Y
+  - Sobel-magnitude
+  - Unsharp Mask
+- Với FPGA-equivalent preprocessing, dùng đúng Q8.8 kernel và saturation behavior.
+
+Output:
+
+- Folder dataset đã preprocess theo từng branch.
+- Metadata JSON ghi kernel, scale, normalization.
+
+Unblocks:
+
+- CNN training/evaluation.
+- Visual examples in paper.
+
+### 10. Freeze downstream CNN protocol
+
+What to do:
+
+- Chọn model chính:
+  - ResNet18 cho fast-track.
+  - ResNet50 nếu có GPU/time.
+- Giữ cùng architecture, training recipe, epochs, seed cho mọi preprocessing branch.
+- Không tune riêng cho từng branch nếu muốn so sánh công bằng.
+
+Output:
+
+- Training config YAML/JSON.
+- Fixed model protocol.
+
+Unblocks:
+
+- Accuracy/F1 comparison.
+- Claim "downstream evaluation" hợp lệ.
+
+### 11. Run branch-by-branch CNN evaluation
+
+What to do:
+
+- Train/evaluate từng branch với cùng split.
+- Report:
+  - Accuracy
+  - Macro-F1
+  - Precision
+  - Recall
+  - confusion matrix
+- Nếu thời gian cho phép, chạy 3 seeds và report mean/std.
+
+Output:
+
+- Metrics table.
+- Confusion matrices.
+- Best checkpoint per branch.
+
+Unblocks:
+
+- Main application result.
+- Decision preprocessing nào preserves/degrades discriminative features.
+
+### 12. Interpret results conservatively
+
+What to do:
+
+- Nếu một branch tốt hơn Raw: viết là "improved in this experimental setting".
+- Nếu một branch tệ hơn Raw: viết là "degrades discriminative information".
+- Nếu không khác biệt rõ: viết là "hardware preprocessing preserves classifier performance".
+
+Output:
+
+- Discussion notes.
+- Final conclusion wording.
+
+Unblocks:
+
+- Paper discussion and conclusion.
+
+---
+
+## Phase 3 - Paper Writing
+
+### 13. Rewrite title and abstract around preprocessing accelerator
+
+What to do:
+
+- Title direction:
+  - `Runtime-Configurable FPGA Preprocessing Accelerator for Downstream Alzheimer MRI Classification`
+- Abstract phải có đủ:
+  - runtime-configurable 5x5 FPGA core
+  - streaming one-pixel-per-clock
+  - post-route timing/resource/power
+  - downstream CNN evaluation
+  - conservative claim về preprocessing impact
+
+Output:
+
+- New title.
+- New abstract.
+
+Unblocks:
+
+- Coherent paper positioning.
+
+### 14. Update architecture section for Design B
+
+What to do:
+
+- Mô tả:
+  - addressless SRL-based window generator
+  - 6-stage MAC
+  - coeff_q shadow register
+  - runtime kernel load only during idle
+  - Q8.8 coefficient format
+- Nói rõ Design B không tăng số tầng MAC.
+
+Output:
+
+- Architecture section.
+- Updated block diagram.
+
+Unblocks:
+
+- Novelty claim.
+
+### 15. Add hardware result section
+
+What to do:
+
+- Report:
+  - RTL validation
+  - post-route Fmax
+  - resource utilization
+  - power
+  - throughput
+  - ARM/Raspberry Pi baseline
+- Nếu 200 MHz chỉ post-synthesis, ghi là feasibility result, không ghi là final.
+
+Output:
+
+- Hardware results tables.
+
+Unblocks:
+
+- Reviewer-ready hardware evidence.
+
+### 16. Add downstream Alzheimer evaluation section
+
+What to do:
+
+- Report dataset, split, CNN protocol, preprocessing branches, metrics.
+- Include visual examples of Raw/Gaussian/Sharpen/Laplacian/Sobel.
+- So sánh Raw vs preprocessed branches.
+
+Output:
+
+- Main application result table.
+- Confusion matrices.
+
+Unblocks:
+
+- Alzheimer paper contribution.
+
+### 17. Related work and citation cleanup
+
+What to do:
+
+- Verify DOI/BibTeX cho các nhóm citation:
+  - Sobel + CNN/MRI
+  - extended/multi-direction Sobel
+  - cortical thickness/boundary features in Alzheimer
+  - preprocessing for Alzheimer classification
+  - FPGA 2D convolution
+- Không cite paper vượt quá claim thật.
+
+Output:
+
+- Clean `references.bib`.
+- Related work section.
+
+Unblocks:
+
+- Submission-quality paper.
+
+### 18. Final reproducibility package
+
+What to do:
+
+- Gom scripts:
+  - RTL regression
+  - Vivado timing/power
+  - CPU benchmark
+  - preprocessing export
+  - CNN training/evaluation
+- Ghi command lines trong README.
+
+Output:
+
+- Reproducibility checklist.
+- Artifact folder/report.
+
+Unblocks:
+
+- Defense/demo/submission.
+
+---
+
+## RISK FLAG - highest-risk item
+
+Highest-risk item: downstream CNN evaluation with a clean dataset split.
+
+Lý do:
+
+- Nếu bỏ post-route 200 MHz, paper vẫn có thể fallback về 146 MHz post-route.
+- Nếu bỏ Raspberry Pi benchmark, paper vẫn còn hardware validation.
+- Nhưng nếu bỏ CNN evaluation, title Alzheimer preprocessing không còn được chứng minh; paper sẽ quay lại thành một paper FPGA image filtering chung.
+
+Mitigation:
+
+- Fast-track ResNet18 trước.
+- Chỉ dùng một dataset chính.
+- Freeze split sớm.
+- Chạy Raw vs Gaussian vs Laplacian vs Sobel-magnitude trước, thêm các branch khác sau.
+
+---
+
+## Fast-track path - minimum viable paper
+
+Nếu thời gian hạn chế, làm tối thiểu theo thứ tự này:
+
+1. Hardware:
+   - Giữ post-route 146 MHz làm official claim.
+   - Chỉ report Design B 200 MHz là post-synthesis feasibility nếu chưa route xong.
+   - Run RTL regression cho 5 kernel cũ + Sobel-X/Y.
+
+2. Software baseline:
+   - Chạy Raspberry Pi naive C 5x5 single-thread.
+   - Chạy OpenCV `filter2D` single-thread.
+   - Không lấy desktop Ryzen làm baseline chính.
+
+3. CNN:
+   - Dataset Kaggle Alzheimer MRI 4-class.
+   - Model ResNet18.
+   - Branches tối thiểu:
+     - Raw
+     - Gaussian
+     - Laplacian
+     - Sobel-magnitude
+   - Metrics:
+     - Accuracy
+     - Macro-F1
+     - confusion matrix
+
+4. Paper:
+   - Claim chính: runtime-configurable FPGA preprocessing core + downstream evaluation.
+   - Không claim preprocessing luôn cải thiện accuracy.
+   - Không claim FPGA thắng desktop CPU.
+
+---
+
+## Sobel-like 5x5 Q8.8 kernel values
+
+Definition:
+
+- Base derivative vector: `[-1, -2, 0, 2, 1]`
+- Base smoothing vector: `[1, 4, 6, 4, 1]`
+- Integer scale: `S = 5`
+- FPGA coefficient format: signed 16-bit integer, interpreted as Q8.8, normalized by `>>> 8`.
+- This scale keeps an ideal full step response near 8-bit range because positive coefficient sum is `48 * 5 = 240`.
+
+### Sobel-X 5x5, Q8.8 integer coefficients
+
+```text
+[
+  [ -5, -10,   0,  10,   5],
+  [-20, -40,   0,  40,  20],
+  [-30, -60,   0,  60,  30],
+  [-20, -40,   0,  40,  20],
+  [ -5, -10,   0,  10,   5]
+]
+```
+
+Flattened row-major:
+
+```text
+-5, -10, 0, 10, 5,
+-20, -40, 0, 40, 20,
+-30, -60, 0, 60, 30,
+-20, -40, 0, 40, 20,
+-5, -10, 0, 10, 5
+```
+
+### Sobel-Y 5x5, Q8.8 integer coefficients
+
+```text
+[
+  [ -5, -20, -30, -20,  -5],
+  [-10, -40, -60, -40, -10],
+  [  0,   0,   0,   0,   0],
+  [ 10,  40,  60,  40,  10],
+  [  5,  20,  30,  20,   5]
+]
+```
+
+Flattened row-major:
+
+```text
+-5, -20, -30, -20, -5,
+-10, -40, -60, -40, -10,
+0, 0, 0, 0, 0,
+10, 40, 60, 40, 10,
+5, 20, 30, 20, 5
+```
+
+### Negative-direction kernels for no-RTL-change magnitude
+
+Nếu giữ core hiện tại và không thêm signed output mode, cần thêm hai kernel đảo dấu:
+
+- `sobel_neg_x5 = -sobel_x5`
+- `sobel_neg_y5 = -sobel_y5`
+
+Then software magnitude can be approximated as:
+
+```text
+abs_gx = max(output(+Gx), output(-Gx))
+abs_gy = max(output(+Gy), output(-Gy))
+sobel_magnitude = clip(abs_gx + abs_gy, 0, 255)
+```
+
+This avoids losing negative gradients caused by RGB888 saturation.
+
+---
+
+## Execution status - 2026-05-28
+
+### Completed locally
+
+1. Sobel-like 5x5 kernels added to RTL verification flow.
+
+Output:
+
+- `sobel_x5` and `sobel_y5` added to:
+  - `python/prepare_case.py`
+  - `python/golden_model.py`
+  - `python/run_d455_fullhd_rtl_frame.py`
+  - `scripts/run_regression.ps1`
+  - CPU benchmark scripts
+
+Result:
+
+- RTL regression PASS for 9/9 kernels:
+  - `identity5`
+  - `gaussian5`
+  - `sharpen5`
+  - `emboss5`
+  - `laplacian5`
+  - `sobel_x5`
+  - `sobel_y5`
+  - `sobel_neg_x5`
+  - `sobel_neg_y5`
+- Each 16x16 case produced 144 valid outputs and 0 mismatches.
+
+2. Design B post-route timing closure completed.
+
+Output:
+
+- `scripts/run_impl_fmax_sweep_design_b.tcl`
+- `vivado_project/fmax_sweep_impl_design_b/impl_fmax_sweep_summary.csv`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/timing_post_route.rpt`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/util_post_route.rpt`
+
+Result:
+
+```text
+200 MHz post-route PASS
+WNS = +0.250 ns
+WHS = +0.069 ns
+Fmax estimate = 210.53 MHz
+DSP = 75
+BRAM = 0
+Slice LUTs = 7,236
+Slice Registers = 1,727
+```
+
+This unblocks the official 200 MHz hardware claim for Design B, with the condition that the coefficient-stationary protocol is documented: kernel coefficients are updated only while `valid_in=0`.
+
+3. SAIF-annotated power report generated for Design B.
+
+Output:
+
+- `sim/activity_design_b_200MHz.saif`
+- `scripts/report_power_design_b.tcl`
+- `vivado_project/fmax_sweep_impl_design_b/200MHz/power_post_route_saif.rpt`
+
+Result:
+
+```text
+Total On-Chip Power = 0.421 W
+Dynamic Power       = 0.329 W
+Device Static Power = 0.092 W
+Confidence Level    = Medium
+Design Nets Matched = 4%
+```
+
+Note:
+
+- Power confidence is better than the previous 1% net-match report, but still not full signoff.
+- Use it as SAIF-annotated estimate, not board-measured power.
+
+4. CPU software baselines extended.
+
+Output:
+
+- `python/benchmark_cpu_gaussian.py`
+- `python/benchmark_naive_c_5x5.c`
+
+Result on Ryzen 7 5800H, 1080p:
+
+| Baseline | Gaussian | Sharpen | Laplacian | Sobel-X | Sobel-Y |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Naive C 5x5, 1 thread | 44.8 Mpix/s | 34.1 Mpix/s | 32.9 Mpix/s | 35.4 Mpix/s | 39.0 Mpix/s |
+| OpenCV filter2D, 1 thread | 118.7 Mpix/s | 139.2 Mpix/s | 215.3 Mpix/s | 143.0 Mpix/s | 143.2 Mpix/s |
+| FPGA Design B post-route | 200.0 Mpix/s | 200.0 Mpix/s | 200.0 Mpix/s | 200.0 Mpix/s | 200.0 Mpix/s |
+
+Interpretation:
+
+- FPGA Design B clearly beats naive C on desktop and should be much stronger against ARM/Raspberry Pi naive C.
+- OpenCV `GaussianBlur` remains a special optimized/separable baseline and should not be the main comparison for arbitrary 5x5 kernels.
+
+### Still blocked by external inputs
+
+1. Raspberry Pi / ARM benchmark:
+
+- Needs a Raspberry Pi, Zynq PS, or other ARM Cortex-A target.
+- The C benchmark is now portable and ready to compile on Linux:
+
+```bash
+gcc -O3 -march=native python/benchmark_naive_c_5x5.c -o python/benchmark_naive_c_5x5
+python/benchmark_naive_c_5x5 20 5
+```
+
+2. Alzheimer MRI CNN evaluation:
+
+- Needs dataset selection/download and clean train/validation/test split.
+- This remains the highest-risk item for the Alzheimer-specific paper claim.

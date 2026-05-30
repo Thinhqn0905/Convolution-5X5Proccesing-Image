@@ -1,0 +1,2 @@
+freq_mhz,period_ns,status,wns_ns,whs_ns,fmax_est_mhz,coeff_regs,mul_dsps,timing_report,util_report
+200,5.000000,PASS,0.250000,0.069000,210.526316,16,75,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_impl_design_b/200MHz/timing_post_route.rpt,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_impl_design_b/200MHz/util_post_route.rpt

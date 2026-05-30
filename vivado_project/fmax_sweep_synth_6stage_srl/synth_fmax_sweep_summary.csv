@@ -1,0 +1,2 @@
+freq_mhz,period_ns,status,wns_ns,fmax_est_mhz,run_status,timing_report
+200,5.000000,PASS,1.138000,258.933195,synth_design Complete!,E:/PROJECTS/convolution_fpga/vivado_project/fmax_sweep_synth_6stage_srl/200MHz/timing_post_synth.rpt

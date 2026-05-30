@@ -18,12 +18,12 @@ def rx_thread_func(ser: serial.Serial, expected_bytes: int, rx_buffer: bytearray
             bytes_read += len(chunk)
     
 def send_kernel(ser: serial.Serial, kernel_name: str):
-    # Standard 5x5 kernels
+    # Q8.8 5x5 kernels, sent as signed 16-bit coefficients (MSB first).
     kernels = {
-        "identity": [
+        "identity5": [
             0,  0,  0,  0,  0,
             0,  0,  0,  0,  0,
-            0,  0,  1,  0,  0,
+            0,  0, 256,  0,  0,
             0,  0,  0,  0,  0,
             0,  0,  0,  0,  0,
         ],
@@ -35,32 +35,50 @@ def send_kernel(ser: serial.Serial, kernel_name: str):
             1,  4,  6,  4, 1,
         ],
         "sharpen5": [
-            -1, -1, -1, -1, -1,
-            -1,  2,  2,  2, -1,
-            -1,  2,  8,  2, -1,
-            -1,  2,  2,  2, -1,
-            -1, -1, -1, -1, -1,
+            0, -16, -16, -16, 0,
+            -16, 32, -64, 32, -16,
+            -16, -64, 320, -64, -16,
+            -16, 32, -64, 32, -16,
+            0, -16, -16, -16, 0,
         ],
         "laplacian5": [
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, 24, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-        ]
+            0, 0, -16, 0, 0,
+            0, -16, -32, -16, 0,
+            -16, -32, 256, -32, -16,
+            0, -16, -32, -16, 0,
+            0, 0, -16, 0, 0,
+        ],
+        "sobel_x5": [
+            -5, -10, 0, 10, 5,
+            -20, -40, 0, 40, 20,
+            -30, -60, 0, 60, 30,
+            -20, -40, 0, 40, 20,
+            -5, -10, 0, 10, 5,
+        ],
+        "sobel_y5": [
+            -5, -20, -30, -20, -5,
+            -10, -40, -60, -40, -10,
+            0, 0, 0, 0, 0,
+            10, 40, 60, 40, 10,
+            5, 20, 30, 20, 5,
+        ],
     }
+    kernels["sobel_neg_x5"] = [-v for v in kernels["sobel_x5"]]
+    kernels["sobel_neg_y5"] = [-v for v in kernels["sobel_y5"]]
     
-    k = kernels.get(kernel_name, kernels["identity"])
+    k = kernels.get(kernel_name, kernels["identity5"])
     
     print(f"Programming kernel '{kernel_name}' to FPGA...")
     # Send 'K' command
     ser.write(b'K')
     time.sleep(0.1) # small delay
     
-    # Send 25 bytes (each coeff is a signed 8-bit int)
+    # Send 50 bytes (25 signed 16-bit coefficients).
     k_bytes = bytearray()
     for val in k:
-        k_bytes.append(val & 0xFF)
+        twos = val & 0xFFFF
+        k_bytes.append((twos >> 8) & 0xFF)
+        k_bytes.append(twos & 0xFF)
         
     ser.write(k_bytes)
     time.sleep(0.5) # Wait for programming
@@ -73,7 +91,21 @@ def main():
     parser.add_argument("--baud", type=int, default=115200, help="Baud rate (must match arty_top.sv)")
     parser.add_argument("--width", type=int, default=160, help="Image width (must match IMAGE_WIDTH parameter in FPGA)")
     parser.add_argument("--height", type=int, default=120, help="Image height")
-    parser.add_argument("--kernel", type=str, default="gaussian5", choices=["identity", "gaussian5", "sharpen5", "laplacian5"])
+    parser.add_argument(
+        "--kernel",
+        type=str,
+        default="gaussian5",
+        choices=[
+            "identity5",
+            "gaussian5",
+            "sharpen5",
+            "laplacian5",
+            "sobel_x5",
+            "sobel_y5",
+            "sobel_neg_x5",
+            "sobel_neg_y5",
+        ],
+    )
     args = parser.parse_args()
 
     # KSIZE = 5, padding = 4. Output dimensions:

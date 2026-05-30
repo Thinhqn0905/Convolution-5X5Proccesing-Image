@@ -12,10 +12,14 @@ module line_buffer_4 #(
     output logic                        valid_out,
     output logic [DATA_W*KSIZE*KSIZE-1:0] window_flat
 );
-    logic [DATA_W-1:0] line0 [0:IMAGE_WIDTH-1];
-    logic [DATA_W-1:0] line1 [0:IMAGE_WIDTH-1];
-    logic [DATA_W-1:0] line2 [0:IMAGE_WIDTH-1];
-    logic [DATA_W-1:0] line3 [0:IMAGE_WIDTH-1];
+    localparam int ADDR_W = (IMAGE_WIDTH <= 1) ? 1 : $clog2(IMAGE_WIDTH);
+
+    // Addressless streaming delay lines. Vivado maps these chains to SRLs,
+    // removing the x_count-to-RAM-read path from the pixel-rate datapath.
+    (* shreg_extract = "yes", srl_style = "srl" *) logic [DATA_W-1:0] line0 [0:IMAGE_WIDTH-1];
+    (* shreg_extract = "yes", srl_style = "srl" *) logic [DATA_W-1:0] line1 [0:IMAGE_WIDTH-1];
+    (* shreg_extract = "yes", srl_style = "srl" *) logic [DATA_W-1:0] line2 [0:IMAGE_WIDTH-1];
+    (* shreg_extract = "yes", srl_style = "srl" *) logic [DATA_W-1:0] line3 [0:IMAGE_WIDTH-1];
 
     logic [DATA_W-1:0] sr0 [0:KSIZE-1];
     logic [DATA_W-1:0] sr1 [0:KSIZE-1];
@@ -23,7 +27,7 @@ module line_buffer_4 #(
     logic [DATA_W-1:0] sr3 [0:KSIZE-1];
     logic [DATA_W-1:0] sr4 [0:KSIZE-1];
 
-    logic [15:0] x_count;
+    logic [ADDR_W-1:0] x_count;
     logic [15:0] y_count;
     logic [DATA_W-1:0] p0;
     logic [DATA_W-1:0] p1;
@@ -31,6 +35,7 @@ module line_buffer_4 #(
     logic [DATA_W-1:0] p3;
 
     int i_ff;
+    int i_line;
     int i_comb;
 
     always_ff @(posedge clk) begin
@@ -48,15 +53,22 @@ module line_buffer_4 #(
         end else begin
             valid_out <= 1'b0;
             if (valid_in) begin
-                p0 = line0[x_count];
-                p1 = line1[x_count];
-                p2 = line2[x_count];
-                p3 = line3[x_count];
+                p0 = line0[IMAGE_WIDTH-1];
+                p1 = line1[IMAGE_WIDTH-1];
+                p2 = line2[IMAGE_WIDTH-1];
+                p3 = line3[IMAGE_WIDTH-1];
 
-                line3[x_count] <= line2[x_count];
-                line2[x_count] <= line1[x_count];
-                line1[x_count] <= line0[x_count];
-                line0[x_count] <= pixel_in;
+                line0[0] <= pixel_in;
+                line1[0] <= p0;
+                line2[0] <= p1;
+                line3[0] <= p2;
+
+                for (i_line = 1; i_line < IMAGE_WIDTH; i_line++) begin
+                    line0[i_line] <= line0[i_line-1];
+                    line1[i_line] <= line1[i_line-1];
+                    line2[i_line] <= line2[i_line-1];
+                    line3[i_line] <= line3[i_line-1];
+                end
 
                 for (i_ff = 0; i_ff < KSIZE-1; i_ff++) begin
                     sr0[i_ff] <= sr0[i_ff+1];
@@ -80,7 +92,7 @@ module line_buffer_4 #(
                     x_count <= '0;
                     y_count <= y_count + 16'd1;
                 end else begin
-                    x_count <= x_count + 16'd1;
+                    x_count <= x_count + 1'b1;
                 end
             end
         end

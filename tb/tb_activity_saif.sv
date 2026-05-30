@@ -1,14 +1,24 @@
 `timescale 1ns/1ps
 
 `include "saif_clock_cfg.svh"
+`include "saif_image_cfg.svh"
 
 `ifndef TB_CLK_HALF_NS
 `define TB_CLK_HALF_NS 5
 `endif
 
 module tb_activity_saif;
+`ifndef TB_IMAGE_W
     localparam int IMAGE_W = 640;
+`else
+    localparam int IMAGE_W = `TB_IMAGE_W;
+`endif
+
+`ifndef TB_IMAGE_H
     localparam int IMAGE_H = 480;
+`else
+    localparam int IMAGE_H = `TB_IMAGE_H;
+`endif
     localparam int KSIZE = 5;
     localparam int PIXELS = IMAGE_W * IMAGE_H;
 
